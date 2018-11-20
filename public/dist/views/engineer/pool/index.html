@@ -1,0 +1,279 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<title>山塘列表</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>水利工程</cite>
+        </a>
+        <a>
+            <cite>山塘</cite>
+        </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-pool">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">行政区</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="district" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search">搜索</button>
+            <button class="layui-btn" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">山塘列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-subject-pool-all" lay-filter="trigger"></table>
+                    <script type="text/html" id="tableTool">
+                        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'util', 'form'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        table = layui.table,
+        form = layui.form,
+        view = layui.view;
+
+    var DISABLED = 'layui-btn-disabled';
+    //调用表格数据
+    $.ajax({
+        url: '/pools',
+        type: 'GET',
+        data: {
+            'page': '1',
+            'limit': '100000000000'
+        },
+        async: true,
+        success: function(result) {
+            renderTable(result.data);
+        },
+        error: function(err) {
+
+        }
+    });
+    var table_name = table.render({
+        elem: '#LAY-subject-pool-all',
+        url: '/pools',
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    width: 50,
+                    align: 'center',
+                    fixed: 'left'
+                }, {
+                    field: 'district',
+                    title: '行政区',
+                    width: 100,
+                    align: 'center',
+                    fixed: 'left'
+                },
+                {
+                    field: 'name',
+                    title: '名称',
+                    width: 120,
+                    align: 'center',
+                    fixed: 'left'
+                },
+                {
+                    field: 'type',
+                    title: '等级',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'admin_village',
+                    title: '所在行政村',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'nature_village',
+                    title: '所在自然村',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'area',
+                    title: '面积(m2)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'storage',
+                    title: '总库容(万m3)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'catch_area',
+                    title: '集雨面积(km2)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'dam_height',
+                    title: '坝高(m)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'dam_length',
+                    title: '坝长(m)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'house',
+                    title: '下游直接影响房屋(间)',
+                    width: 150,
+                    align: 'center'
+                },
+                {
+                    field: 'people',
+                    title: '下游直接影响人口(人)',
+                    width: 150,
+                    align: 'center'
+                },
+                {
+                    field: 'road',
+                    title: '下游影响干道',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'spillway',
+                    title: '有无溢洪道',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'build_year',
+                    title: '建成年份',
+                    align: 'center',
+                    width: 100
+                },
+                {
+                    field: 'standard_year',
+                    title: '整治年份',
+                    align: 'center',
+                    width: 100
+                },
+                {
+                    field: 'standard',
+                    title: '整治标准',
+                    align: 'center',
+                    width: 100
+                },
+                {
+                    title: '操作',
+                    width: 120,
+                    fixed: 'right',
+                    align: 'center',
+                    toolbar: '#tableTool'
+                }
+            ]
+        ],
+        limit: 10
+    });
+
+    function renderTable(tableData) {
+        /*绑定事件*/
+        table.on('tool(trigger)', function(obj) {
+
+            var data = obj.data;
+            data.type = "pool";
+            var layEvent = obj.event;
+            if (layEvent === 'locate') {
+                admin.popup({
+                    title: '定位',
+                    area: ['1000px', '600px'],
+                    success: function() {
+                        view(this.id).render('senior/water/location', data).done(
+                            function() {
+
+                            });
+                    }
+                });
+            }
+        });
+        var districts = '';
+        var names = '';
+        $('#btn-search').click(function() {
+            table_name.reload({
+                where: {
+                    district: $('input[name="district"]').val(),
+                    name: $('input[name="name"]').val()
+                }
+            });
+            districts = $('input[name="district"]').val();
+            names = $('input[name="name"]').val();
+            return false;
+        });
+        //导出
+        form.on('submit(exportExcel)', function() {
+            $.ajax({
+                url: '/pools',
+                type: 'GET',
+                data: {
+                    'page': '1',
+                    'limit': '100000000000',
+                    'district': districts,
+                    'name': names
+                },
+                async: false,
+                success: function(result) {
+                    var arr = [];
+                    result.data.forEach(element => {
+                        arr.push([element.district, element.name, element.type,
+                            element.admin_village,
+                            element.nature_village, element.area,
+                            element.storage, element.catch_area,
+                            element.dam_height, element.dam_length,
+                            element.house, element.people,
+                            element.road,
+                            element.spillway, element.build_year,
+                            element.standard_year,
+                            element.standard
+                        ])
+                    });
+                    table.exportFile(['行政区', '名称', '等级', '所在行政村', '所在自然村', '面积(m2)',
+                        '总库容(万m3)',
+                        '集雨面积(km2)', '坝高(m)', '坝长(m)', '下游直接影响房屋(间)',
+                        '下游直接影响人口(人)', '下游影响干道',
+                        '有无溢洪道', '建成年份', '整治年份', '整治标准'
+                    ], arr, 'xls');
+                },
+                error: function(err) {
+
+                }
+            });
+            return false;
+        });
+    }
+
+
+});
+</script>

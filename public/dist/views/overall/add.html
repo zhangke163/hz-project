@@ -1,0 +1,114 @@
+<script type="text/html" template>
+  <link rel="stylesheet" href="{{ layui.setter.base }}style/add.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+
+<div class="layui-fluid new-fluid">
+	<div class="layui-card-body new-body">
+		<div>
+			<form class="layui-form" action="" lay-filter="search-form">
+				<div class="new-form-item layer-left">
+  				<label class="layui-form-label">全景名称</label>
+  				<div class="layui-input-block new-input">
+  					<input type="text" class="layui-input" lay-verify="required" placeholder="" id="name">
+  				</div>
+  			</div>
+				<div class="new-form-item layer-right">
+  				<label class="layui-form-label">地址</label>
+  				<div class="layui-input-block new-input">
+  					<input type="text" class="layui-input" lay-verify="required" placeholder="" id="address">
+  				</div>
+  			</div>
+  			<div class="new-form-item layer-left">
+  				<label class="layui-form-label">经度</label>
+  				<div class="layui-input-block new-input">
+  					<input type="text" class="layui-input" lay-verify="required" placeholder="" id="lat">
+  				</div>
+  			</div>
+  			<div class="new-form-item layer-right">
+  				<label class="layui-form-label">纬度</label>
+  				<div class="layui-input-block new-input">
+  					<input type="text" class="layui-input" lay-verify="required" placeholder="" id="lng">
+  				</div>
+  			</div>
+        <div class="new-form-item layer-left full-item">
+          <label class="layui-form-label">URL</label>
+          <div class="layui-input-block new-input">
+            <input type="text" class="layui-input" lay-verify="required" placeholder="" id="url">
+          </div>
+        </div>
+
+  			<div class="new-form-item">
+			    <div class="layui-input-block new-input btn-bottom">
+			      <button class="layui-btn cancle">取消</button>
+			      <button class="layui-btn yes" lay-submit="" lay-filter="formDemo">确认</button>
+			    </div>
+			  </div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+  layui.use(['form', 'layer'], function () {
+    var form = layui.form,
+        $ = layui.$,
+        layer = layui.layer,
+        setter = layui.setter;
+        // console.log(setter)
+        // console.log(layui.data(setter.tableName)[setter.request.tokenName])
+
+    form.render(null, 'search-form');
+
+    $('.cancle').click(function (event) {
+      //当你在iframe页面关闭自身时
+      layer.closeAll();
+    });
+
+    //监听提交
+    form.on('submit(formDemo)', function (data) {
+
+      var name = $('#name').val();
+      // console.log(name)
+
+      var address = $('#address').val();
+      // console.log(address)
+
+      var lat = $('#lat').val();
+      // console.log(lat)
+
+      var lng = $('#lng').val();
+      // console.log(lng)
+
+      var url = $('#url').val();
+      // console.log(url)
+
+      $.ajax({
+        url: '/overalls?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request.tokenName],
+        type: 'POST',
+        dataType: 'json',
+        data: {
+          name: name,
+          address: address,
+          lat: lat,
+          lng: lng,
+          url: url
+        },
+      })
+      .done(function() {
+        console.log("success");
+      })
+      .fail(function() {
+        console.log("error");
+      })
+      .always(function() {
+        console.log("complete");
+      });
+      
+
+      //当你在iframe页面关闭自身时
+      layer.closeAll();
+
+      return false;
+    });
+  })
+</script>

@@ -1,0 +1,48 @@
+
+.overall_control {
+    width: 25px;
+    height: 25px;
+    display: block;
+    padding: 3px;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+    cursor: auto;
+    text-align: center;
+
+    background: #ffffff url(images/iconbar.png) no-repeat 100.3% 50%;
+}
+
+.overall_control:hover {
+    background-color: #f4f4f4;
+    cursor: pointer;
+}
+
+.overall_control_active{
+    background: #ffffff url(images/iconbar.png) no-repeat 83.3% 50%;
+}
+
+.monitor_control {
+    width: 25px;
+    height: 25px;
+    display: block;
+    padding: 3px;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+    cursor: auto;
+    text-align: center;
+    background: #ffffff url(images/iconbar.png) no-repeat 92% 50%;
+}
+
+.monitor_control:hover {
+    background-color: #f4f4f4;
+    cursor: pointer;
+}
+
+
+.monitor_control_active{
+    background: #ffffff url(images/iconbar.png) no-repeat 75% 50%;
+}

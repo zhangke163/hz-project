@@ -1,0 +1,117 @@
+<title>
+  角色管理</title>
+<div class="layui-card layadmin-header">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb">
+    <a lay-href="">主页</a>
+    <a>
+      <cite>项目监管</cite>
+    </a>
+    <a>
+      <cite>涉水审批</cite>
+    </a>
+  </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-case">
+  <blockquote class="layui-elem-quote" style="background-color: #fff">
+    <div class="searchTable layui-form-pane">
+      <button class="layui-btn" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+    </div>
+  </blockquote>
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">涉水审批项目</div>
+        <div class="layui-card-body">
+          <blockquote class="layui-elem-quote">系统预留接口，展示湖州市区涉河涉堤建设项目审批（含占用水域）办理情况。以下数据获取自：<a href="http://www.zjzwfw.gov.cn/zjzw/sxcx/itemdo/list.do?serviceId=DB148A8AA0372E56E594206342C3BA02&itemName=%E6%B6%89%E6%B2%B3%E6%B6%89%E5%A0%A4%E5%BB%BA%E8%AE%BE%E9%A1%B9%E7%9B%AE%E5%AE%A1%E6%89%B9%EF%BC%88%E5%90%AB%E5%8D%A0%E7%94%A8%E6%B0%B4%E5%9F%9F%EF%BC%89"
+              target="_blank">浙江政务服务网</a></blockquote>
+          <table id="LAY-supervise-case-all" lay-filter="LAY-supervise-case-all"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['admin', 'table', 'util', 'form'], function () {
+    var $ = layui.$,
+      admin = layui.admin,
+      setter = layui.setter,
+      table = layui.table,
+      element = layui.element,
+      form = layui.form,
+      setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+    //调用表格数据
+    $.ajax({
+      url: './json/supervise/case.js',
+      type: 'GET',
+      data: '',
+      success: function (result) {
+        renderTable(result.data);
+      },
+      error: function (err) {
+        console.log(err)
+      }
+    });
+    var table_name = table.render({
+      elem: '#LAY-supervise-case-all',
+      url: './json/supervise/case.js',
+      page: true,
+      even: false,
+      cols: [
+        [{
+            field: 'id',
+            title: '业务流水号',
+            width: 200,
+            align: 'center'
+          },
+          {
+            field: 'project',
+            align: 'left',
+            title: '项目名称',
+            width: 400
+          },
+          {
+            field: 'applicant',
+            title: '申请单位/个人',
+            align: 'left',
+            width: 250
+          },
+          {
+            field: 'accept_unit',
+            title: '收件单位',
+            width: 100,
+            align: 'center'
+          },
+          {
+            field: 'accept_date',
+            title: '受理时间',
+            width: 120,
+            align: 'center'
+          },
+          {
+            field: 'status',
+            title: '办理状态',
+            width: 120,
+            align: 'center'
+          }
+        ]
+      ],
+      limit: 10
+    });
+
+    function renderTable(tableData) {
+      // 导出
+      form.on('submit(exportExcel)', function () {
+        var arr = [];
+        tableData.forEach(element => {
+          arr.push([element.id, element.project, element.applicant, element.accept_unit,
+            element.accept_date, element.status
+          ])
+        });
+        table.exportFile(['业务流水号', '项目名称', '申请单位/个人', '收件单位', '受理时间', '办理状态'], arr, 'xls');
+        return false;
+      });
+    }
+  });
+</script>

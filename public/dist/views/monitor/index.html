@@ -1,0 +1,266 @@
+<link href="http://vjs.zencdn.net/5.19/video-js.min.css" rel="stylesheet">
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<title>河道列表</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>监控视频</cite>
+        </a>
+        <a>
+            <cite>监控管理</cite>
+        </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-river">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">监控点名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">编号</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="number" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">地址</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="address" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search">搜索</button>
+            <button class="layui-btn" id="btn-add">新增</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">监控列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-subject-river-all" lay-filter="trigger"></table>
+                </div>
+                <script type="text/html" id="tableTool">
+                    <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+                    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="play">播放</a>
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'form', 'videos'], function() {
+    var $ = layui.$,
+        table = layui.table,
+        setter = layui.setter,
+        admin = layui.admin,
+        view = layui.view,
+        form = layui.form;
+
+    //全部消息
+    var table_monitors = table.render({
+        elem: '#LAY-subject-river-all',
+        url: '/monitors?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request
+            .tokenName], //模拟接口
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    width: 50,
+                    align: 'center',
+                    title: '序号'
+                }, {
+                    field: 'number',
+                    title: '编号',
+                    align: 'center',
+                    width: 100
+                }, {
+                    field: 'name',
+                    title: '名称',
+                    align: 'center',
+                    width: 150
+                }, {
+                    field: 'river_name',
+                    title: '河道名称',
+                    align: 'center',
+                    width: 150
+                }, {
+                    field: 'address',
+                    title: '地址',
+                    align: 'left',
+                    width: 400
+                },
+                {
+                    field: 'lng',
+                    title: '经度',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'lat',
+                    title: '纬度',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    title: '操作',
+                    width: 220,
+                    fixed: 'right',
+                    align: 'center',
+                    toolbar: '#tableTool'
+                }
+            ]
+        ],
+        limit: 10
+    });
+
+    /*绑定事件*/
+    table.on('tool(trigger)', function(obj) {
+        var data = obj.data;
+        data.type = "monitor";
+        var layEvent = obj.event;
+        //定位
+        if (layEvent === 'locate') {
+            zoomRow(data);
+        } else if (layEvent === 'play') {
+            layer.open({
+                title: data.name + "(" + data.number + ")",
+                type: 2,
+                content: layui.setter.base + 'views/monitor/play.html?rtmp=' + data.rtmp,
+                area: ['681px', '600px']
+            })
+
+        } else if (layEvent === 'edit') {
+            // console.log(data)
+            admin.popup({
+                title: '编辑',
+                area: ['790px', '465px'],
+                success: function() {
+                    view(this.id).render('monitor/edit', data).done(function() {
+                        form.render(null, 'search-form');
+                    });
+                },
+                end: function() {
+                    $.get('/monitor/' + data.id + '?' + setter.request
+                        .tokenName + '=' + layui.data(setter.tableName)[setter.request
+                            .tokenName],
+                        function(data) {
+                            obj.update({
+                                number: data.number,
+                                river_name: data.river_name,
+                                name: data.name,
+                                address: data.address,
+                                rtmp: data.rtmp,
+                                lat: data.lat,
+                                lng: data.lng
+                            });
+                        });
+                }
+            });
+        } else if (layEvent === 'delete') { //删除
+            layer.confirm('确定删除该条记录？', function(index) {
+                obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+
+                //向服务端发送删除指令
+                $.ajax({
+                        url: '/monitor/' + data.id + '?' + setter.request
+                            .tokenName + '=' + layui.data(setter.tableName)[setter.request
+                                .tokenName],
+                        type: 'delete',
+                        dataType: 'json',
+                        data: {},
+                    })
+                    .done(function() {
+                        layer.msg('删除成功！', {
+                            icon: 1,
+                            time: 1000
+                        }, function() {
+                            table.reload('LAY-subject-river-all', {
+                                page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            });
+                        });
+                    })
+                    .fail(function() {
+                        console.log("error");
+                    })
+                    .always(function() {
+                        console.log("complete");
+                    });
+
+
+
+                layer.close(index);
+            });
+        }
+    });
+
+    function zoomRow(data) {
+        admin.popup({
+            title: '地图定位',
+            area: ['1000px', '600px'],
+            success: function(layero, index) {
+                view(this.id).render('senior/water/location', data).done(function() {
+                    form.render(null, "overallForm");
+                });
+            }
+        });
+    }
+
+    $('#btn-search').on('click', function() {
+        table_monitors.reload({
+            where: {
+                number: $('input[name="number"]').val(),
+                name: $('input[name="name"]').val(),
+                address: $('input[name="address"]').val()
+            }
+        });
+
+        return false;
+    });
+
+    $('#btn-add').on('click', function(event) {
+        event.preventDefault();
+        // layer.open({
+        //     title: '新增',
+        //     type: 2,
+        //     content: layui.setter.base + 'views/monitor/add.html',
+        //     area: ['790px', '465px']
+        // })
+        admin.popup({
+            title: '新增',
+            area: ['790px', '465px'],
+            success: function() {
+                view(this.id).render('monitor/add');
+
+
+            },
+            end: function() {
+                layer.msg('增加成功！', {
+                    icon: 1,
+                    time: 1000
+                }, function() {
+                    //执行重载
+                    table.reload('LAY-subject-river-all', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                    });
+                })
+
+            }
+        });
+    });
+
+});
+</script>

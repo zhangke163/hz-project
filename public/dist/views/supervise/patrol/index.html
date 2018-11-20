@@ -1,0 +1,455 @@
+<title>
+  巡查记录</title>
+  <script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+    </script>
+<div class="layui-card layadmin-header">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb">
+    <a lay-href="">主页</a>
+    <a>
+      <cite>项目监管</cite>
+    </a>
+    <a>
+      <cite>巡查记录</cite>
+    </a>
+  </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-patrol">
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">当月巡查情况</div>
+        <div class="layui-card-body info-body">
+          <div class="data-box">
+            <div class="data-bg">
+              <script type="text/html" template>
+                <img src="{{ layui.setter.base }}style/res/patrolCount.png">
+              </script>
+            </div>
+            <div class="data-info">
+              <div class="info-name">巡查总次数</div>
+              <div id="patrolCount" class="info-val"><span>次</span></div>
+            </div>
+          </div>
+          <div class="data-box">
+            <div class="data-bg">
+              <script type="text/html" template>
+                <img src="{{ layui.setter.base }}style/res/lengthSum.png">
+              </script>
+            </div>
+            <div class="data-info">
+              <div class="info-name">巡查总距离</div>
+              <div id="lengthSum" class="info-val"><span>m</span></div>
+            </div>
+          </div>
+          <div class="data-box">
+            <div class="data-bg">
+              <script type="text/html" template>
+                <img src="{{ layui.setter.base }}style/res/personCount.png">
+              </script>
+            </div>
+            <div class="data-info">
+              <div class="info-name">巡查总人数</div>
+              <div id="personCount" class="info-val"><span>人</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md10">
+      <div class="layui-card">
+        <div class="layui-card-header">当月巡查情况</div>
+        <div class="layui-card-body chart-body">
+          <div id="chart_box" style="height: 290px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <blockquote class="layui-elem-quote" style="background-color: #fff; margin-top: 10px;">
+    <div class="searchTable layui-form-pane">
+      <div class="layui-inline">
+        <label class="layui-form-label">河段名称</label>
+        <div class="layui-inline">
+          <input class="layui-input" name="river_name" type="text" autocomplete="off">
+        </div>
+      </div>
+      <div class="layui-inline">
+        <label class="layui-form-label">巡查人</label>
+        <div class="layui-inline">
+          <input class="layui-input" name="patrol_person" type="text" autocomplete="off">
+        </div>
+      </div>
+      <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+    </div>
+  </blockquote>
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">巡查河段列表</div>
+        <div class="layui-card-body">
+          <table id="LAY-supervise-patrol-all" lay-filter="LAY-supervise-patrol-all"></table>
+        </div>
+        <script type="text/html" id="patrolTable">
+          <a class="layui-btn layui-btn-xs" lay-event="detail">详情</a>
+          <a class="layui-btn layui-btn-xs" lay-event="route">路线</a>
+          </script>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['admin', 'table', 'util','form','laydate','echarts'], function () {
+    var $ = layui.$,
+      admin = layui.admin,
+      view = layui.view,
+      setter = layui.setter,
+      table = layui.table,
+      form = layui.form,
+      laydate = layui.laydate,
+      element = layui.element,
+      setter = layui.setter,
+      echarts = layui.echarts;
+
+    var DISABLED = 'layui-btn-disabled';
+
+    //全部消息
+    var table_name = table.render({
+      elem: '#LAY-supervise-patrol-all',
+      url: '/patrols',
+      page: true,
+      even: false,
+      cols: [
+        [{
+            type: 'numbers',
+            title: '序号',
+            align: 'center',
+            width: 50
+          },{
+            field: 'river_name',
+            title: '河段名称',
+            align: 'center',
+            width: 150
+          },
+          {
+            field: 'start_time',
+            title: '开始时间',
+            width: 200,
+            align: 'center'
+          },
+          {
+            field: 'end_time',
+            title: '结束时间',
+            width: 200,
+            align: 'center'
+          },
+          {
+            field: 'patrol_person',
+            title: '巡查员',
+            align: 'center',
+            templet:function(data){return data.userObj.name},
+            width: 100,
+          },
+          {
+            field: 'remark',
+            title: '备注',
+            align: 'center',
+            width: 400,
+          },
+          {
+            fixed: 'right',
+            title: '操作',
+            width: 200,
+            align: 'center',
+            templet: '#patrolTable'
+          }
+        ]
+      ],
+      limit: 10
+    });
+    laydate.render({
+      elem: '#start_time',
+      type: 'datetime'
+    });
+    laydate.render({
+      elem: '#end_time',
+      type: 'datetime'
+    });
+    /*绑定事件*/
+    table.on('tool(LAY-supervise-patrol-all)', function (obj) {
+      var data = obj.data;
+      var layEvent = obj.event;
+      var rowId = data.id;
+      var title = data.river_name;
+      if (layEvent === 'detail') {
+        layer.open({
+          title: title,
+          type: 2,
+          content: layui.setter.base + 'views/supervise/patrol/detail.html?id=' + rowId,
+          area: ['1200px', '600px']
+        })
+
+      }else if(layEvent === 'route'){
+        admin.popup({
+                title: '路线(绿色： 已处理问题；红色： 未处理问题)'
+                ,area: ['1000px', '600px']
+                ,success: function(){
+                    view(this.id).render('supervise/patrol/route', data).done(function(){
+                      
+                    });
+                }
+            });
+      }
+    });
+
+    //查询功能
+    $('#btn-search').click(function () {
+      table_name.reload({
+        where: {
+          river_name: $('input[name=river_name]').val(),
+          patrol_person: $('input[name=patrol_person]').val()
+        }
+      });
+      return false;
+    });
+
+    var echartsApp;
+    var elemDataView = $('#chart_box');
+    var timeData = [];
+
+    option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                animation: false
+            }
+        },
+        axisPointer: {
+            link: {xAxisIndex: 'all'}
+        },
+        dataZoom: [
+            {
+                show: false,
+                realtime: true,
+                start: 0,
+                end: 100,
+                xAxisIndex: [0, 1]
+            },
+            {
+                type: 'inside',
+                realtime: true,
+                start: 0,
+                end: 100,
+                xAxisIndex: [0, 1]
+            }
+        ],
+        grid: [{
+            left: 50,
+            right: 50,
+            top: 30,
+            height: '30%'
+        }, {
+            left: 50,
+            right: 50,
+            top: '55%',
+            height: '30%'
+        }],
+        xAxis : [
+            {
+                type : 'category',
+                axisLabel: {
+                    margin: 5,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#b3b3b3'
+                    }
+                },
+                axisTick: {
+                    show: false,
+                },
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#ededed'
+                    }
+                },
+                splitLine: {
+                    show: false,
+                },
+                data: timeData
+            },
+            {
+                gridIndex: 1,
+                type : 'category',
+                axisLabel: {
+                    margin: 5,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#b3b3b3'
+                    }
+                },
+                axisTick: {
+                    show: false,
+                },
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#ededed'
+                    }
+                },
+                splitLine: {
+                    show: false,
+                },
+                data: timeData,
+                position: 'top'
+            }
+        ],
+        yAxis : [
+            {
+                name : '巡查次数',
+                nameTextStyle: {
+                  color: '#333',
+                  fontSize: 12
+                },
+                type : 'value',
+                axisTick: {
+                    show: false,
+                },
+                axisLabel: {
+                    margin: 10,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#b3b3b3'
+                    }
+                },
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#ededed'
+                    }
+                },
+                splitLine: {
+                    show: false,
+                },
+                splitNumber:1
+            },
+            {
+                gridIndex: 1,
+                name : '巡查距离',
+                nameTextStyle: {
+                  color: '#333',
+                  fontSize: 12
+                },
+                type : 'value',
+                inverse: true,
+                axisTick: {
+                    show: false,
+                },
+                axisLabel: {
+                    margin: 10,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#b3b3b3'
+                    }
+                },
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#ededed'
+                    }
+                },
+                splitLine: {
+                    show: false,
+                }
+            }
+        ],
+        series : [
+            {
+                name:'巡查次数',
+                type:'bar',
+                barWidth: 20,
+                hoverAnimation: false,
+                itemStyle: {
+
+                    normal: {
+                        color: '#009688',
+                        barBorderRadius: [15, 15, 0, 0],
+                        shadowColor: 'rgba(0,0,0,0.1)',
+                        shadowBlur: 3,
+                        shadowOffsetY: 3
+                    }
+                },
+                data:[]
+            },
+            {
+                name:'巡查距离',
+                type:'bar',
+                barWidth: 20,
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                hoverAnimation: false,
+                itemStyle: {
+
+                    normal: {
+                        color: '#007fc8',
+                        barBorderRadius: [0, 0, 15, 15],
+                        shadowColor: 'rgba(0,0,0,0.1)',
+                        shadowBlur: 3,
+                        shadowOffsetY: 3
+                    }
+                },
+                data: []
+            }
+        ]
+    };
+
+    //绘制图表前设定高度
+    // elemDataView.eq(0).height(_box_height);
+
+    var echartsApp = echarts.init(elemDataView[0], layui.echartsTheme);
+    echartsApp.setOption(option);
+    window.onresize = echartsApp.resize;
+
+    $.get('/patrols/statisticCountByMonth', function(data) {
+      // console.log(data)
+      var _count = [];
+
+      _count.push(data.data[0].count);
+
+      $.get('/patrols/statisticLengthByMonth', function(data) {
+        // console.log(data)
+        var _length = [],
+            _dataX = [];
+
+        _length.push(data.data[0].length);
+        _dataX.push(data.data[0].month);
+        // console.log(data.data[0].month)
+
+        echartsApp.setOption({
+          xAxis : [
+              {
+                  data: _dataX,
+              },
+              {
+                  data: _dataX,
+              }
+          ],
+          series : [
+              {
+                  data: _count
+              },
+              {
+                  data: _length
+              }
+          ]
+        });
+      });
+    });
+
+    $.get('/patrols/monthAggregate', function(data) {
+      console.log(data.data)
+      $('#patrolCount').html(`${data.data[0].patrolCount}<span>次</span>`);
+      $('#lengthSum').html(`${data.data[0].lengthSum}<span> m</span>`);
+      $('#personCount').html(`${data.data[0].personCount}<span> 人</span>`);
+    });
+  });
+</script>

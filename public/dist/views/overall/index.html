@@ -1,0 +1,264 @@
+<link href="http://vjs.zencdn.net/5.19/video-js.min.css" rel="stylesheet">
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>河道全景</cite>
+        </a>
+        <a>
+            <cite>河道全景</cite>
+        </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-river">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">地址</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="address" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search">搜索</button>
+            <button class="layui-btn" id="btn-add">新增</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">全景列表</div>
+                <div class="layui-card-body">
+                    <table id="overallList" lay-filter="trigger"></table>
+                </div>
+                <script type="text/html" id="tableTool">
+                    <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+                    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="play">播放</a>
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'form'], function() {
+    var $ = layui.$,
+        table = layui.table,
+        setter = layui.setter,
+        admin = layui.admin,
+        view = layui.view,
+        form = layui.form;
+
+    //全部消息
+    var table_rivers = table.render({
+        elem: '#overallList',
+        url: '/overalls?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request
+            .tokenName], //模拟接口
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    align: 'center',
+                    width: 50
+                }, {
+                    field: 'name',
+                    title: '全景点名称',
+                    align: 'center',
+                    width: 150
+                }, {
+                    field: 'address',
+                    title: '地址',
+                    align: 'left',
+                    width: 400
+                },
+                {
+                    field: 'lng',
+                    title: '经度',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'lat',
+                    title: '纬度',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    title: '操作',
+                    width: 220,
+                    fixed: 'right',
+                    align: 'center',
+                    toolbar: '#tableTool'
+                }
+            ]
+        ],
+        limit: 10
+    });
+
+    /*绑定事件*/
+    table.on('tool(trigger)', function(obj) {
+        var data = obj.data; //获得当前行数据
+        data.type = "overall";
+        var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+        //定位
+        if (layEvent === 'locate') {
+            /*定位*/
+            zoomRow(data);
+        } else if (layEvent === 'play') {
+            layer.open({
+                title: data.name,
+                type: 2,
+                content: data.url,
+                area: ['1000px', '600px'],
+                success: function() {
+                    //$(".TopContainer_container_3aTj8U .TitleContainer_title_3n-dyo").style.display='none';
+                }
+            })
+
+        } else if (layEvent == "edit") {
+            admin.popup({
+                title: '编辑',
+                area: ['790px', '465px'],
+                success: function() {
+                    view(this.id).render('overall/edit', data).done(function() {
+                        form.render(null, 'search-form');
+                    });
+                },
+                end: function() {
+                    $.get('/overall/' + data.id + '?' + setter.request
+                        .tokenName + '=' + layui.data(setter.tableName)[setter.request
+                            .tokenName],
+                        function(data) {
+                            obj.update({
+                                name: data.name,
+                                address: data.address,
+                                lat: data.lat,
+                                lng: data.lng,
+                                url: data.url
+                            });
+                        });
+                }
+            });
+        } else if (layEvent == "delete") {
+            layer.confirm('确定删除该条记录？', function(index) {
+                obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+
+                //向服务端发送删除指令
+                $.ajax({
+                        url: '/overall/' + data.id + '?' + setter.request
+                            .tokenName + '=' + layui.data(setter.tableName)[setter.request
+                                .tokenName],
+                        type: 'delete',
+                        dataType: 'json',
+                        data: {},
+                    })
+                    .done(function() {
+                        layer.msg('删除成功！', {
+                            icon: 1,
+                            time: 1000
+                        }, function() {
+                            table.reload('overallList', {
+                                page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            });
+                        });
+                    })
+                    .fail(function() {
+                        console.log("error");
+                    })
+                    .always(function() {
+                        console.log("complete");
+                    });
+
+                layer.close(index);
+            });
+        }
+    });
+
+    function zoomRow(data) {
+        admin.popup({
+            title: '地图定位',
+            area: ['1000px', '600px'],
+            success: function() {
+                view(this.id).render('senior/water/location', data).done(function() {
+                    form.render(null, "overallForm");
+                });
+            }
+        });
+    }
+
+    // function updateOverall(data){
+
+    // }
+
+    // function deleteOverall(data){
+
+    //     layer.confirm("确定删除该条记录？",function(){
+    //         console.log(data);
+
+    //         table_rivers.reload({
+    //             where: {
+    //                 address: $('input[name="address"]').val(),
+    //                 name: $('input[name="name"]').val()
+    //             }
+    //         })
+    //     });
+    // }
+
+    $('#btn-search').on('click', function() {
+        table_rivers.reload({
+            where: {
+                address: $('input[name="address"]').val(),
+                name: $('input[name="name"]').val()
+            }
+        });
+
+        return false;
+    });
+
+    $('#btn-add').on('click', function(event) {
+        event.preventDefault();
+        // layer.open({
+        //     title: '新增',
+        //     type: 2,
+        //     content: layui.setter.base + 'views/overall/add.html',
+        //     area: ['790px', '465px']
+        // })
+
+        admin.popup({
+            title: '新增',
+            area: ['790px', '465px'],
+            success: function() {
+                view(this.id).render('overall/add');
+            },
+            end: function() {
+                layer.msg('增加成功！', {
+                    icon: 1,
+                    time: 1000
+                }, function() {
+                    //执行重载
+                    table.reload('overallList', {
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                    });
+                })
+
+            }
+        });
+    });
+
+});
+</script>

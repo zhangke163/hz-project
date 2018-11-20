@@ -1,0 +1,200 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+  <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<title>水质站列表</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+      <cite>水利工程</cite>
+    </a>
+        <a>
+      <cite>水质站</cite>
+    </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-quality">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">测站名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+            <button class="layui-btn" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">水质站列表</div>
+                <div class="layui-card-body">
+                    <blockquote class="layui-elem-quote">
+                        按照《中华人民共和国地表水环境质量标准》，依据地表水水域环境功能和保护目标，我国水质按功能高低依次分为五类。
+                        <br>其中，I类水质良好，地下水只需消毒处理，地表水经简易净化处理（如过滤）、消毒后即可供生活饮用。 II类 水质受轻度污染，经常规净化处理（如絮凝、沉淀、过滤、消毒等）后，可供生活饮用。
+                        III类水质经过处理后也能供生活饮用。 IV类以下水质恶劣，不能作为饮用水源。
+                    </blockquote>
+                    <table id="LAY-subject-quality-all" lay-filter="trigger"></table>
+                    <script type="text/html" id="tableTool">
+                        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+        </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'util', 'form'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        table = layui.table,
+        form = layui.form,
+        element = layui.element,
+        view = layui.view,
+        setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+    //调用表格数据
+    $.ajax({
+        url: '/quality',
+        type: 'GET',
+        data: {
+            'page': '1',
+            'limit': '100000000000'
+        },
+        async: true,
+        success: function(result) {
+            renderTable(result.data);
+        },
+        error: function(err) {
+
+        }
+    });
+    var table_name = table.render({
+        elem: '#LAY-subject-quality-all',
+        url: '/quality',
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    width: 50,
+                    align: 'center'
+                }, {
+                    field: 'name',
+                    title: '测站名称',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'type',
+                    title: '等级',
+                    align: 'center',
+                    width: 150,
+                    sort: true
+                },
+                {
+                    field: 'zone',
+                    align: 'left',
+                    title: '所属水功能区',
+                    width: 220
+                },
+                {
+                    field: 'build_year',
+                    title: '建站年月',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'estimate_length',
+                    title: '评价河长(m)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'estimate_area',
+                    title: '评价面积(km2)',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'target',
+                    title: '水质目标',
+                    width: 100,
+                    align: 'center'
+                },
+                {
+                    title: '操作',
+                    width: 120,
+                    fixed: 'right',
+                    align: 'center',
+                    toolbar: '#tableTool'
+                }
+            ]
+        ],
+        limit: 10
+    });
+    var names = '';
+    $('#btn-search').click(function() {
+        table_name.reload({
+            where: {
+                name: $('input[name="name"]').val()
+            }
+        });
+        names = $('input[name="name"]').val();
+        return false;
+    });
+
+    function renderTable(tableData) {
+        //导出
+        form.on('submit(exportExcel)', function() {
+            $.ajax({
+                url: '/quality',
+                type: 'GET',
+                data: {
+                    'page': '1',
+                    'limit': '100000000000',
+                    'name': names
+                },
+                async: false,
+                success: function(result) {
+                    var arr = [];
+                    result.data.forEach(element => {
+                        arr.push([element.name, element.type, element.type, element.zone,
+                            element.estimate_length, element.estimate_area, element.target
+                        ])
+                    });
+                    table.exportFile(['测站名称', '等级', '所属水功能区', '建站年月', '评价河长(m)', '评价面积(km2)', '水质目标'], arr, 'xls');
+                },
+                error: function(err) {
+
+                }
+            });
+            return false;
+        });
+    }
+
+    /*绑定事件*/
+    table.on('tool(trigger)', function(obj) {
+        var data = obj.data;
+        data.type = "quality";
+        var layEvent = obj.event;
+        if (layEvent === 'locate') {
+            admin.popup({
+                title: '定位',
+                area: ['1000px', '600px'],
+                shade: 0.2,
+                success: function() {
+                    view(this.id).render('senior/water/location', data).done(function() {
+
+                    });
+                }
+            });
+        }
+    });
+});
+</script>

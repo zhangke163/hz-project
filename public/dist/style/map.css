@@ -1,0 +1,362 @@
+#select {
+    width: 180px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 999;
+}
+
+.initPosition {
+    width: 180px;
+    height: 435px;
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    z-index: 999;
+    overflow: auto;
+}
+
+#layout .layui-table td,
+.layui-table th {
+    font-size: 8px;
+    padding: 5px 5px;
+}
+
+#layout .layui-form-item,
+#layout .layui-form-switch {
+    margin: 0 auto;
+}
+
+#layout {
+    background-color: rgba(0, 0, 0, 0);
+    display: none;
+    overflow: auto;
+}
+
+.layui-form-radio,
+#layTable {
+    margin: 0 auto;
+    padding: 0;
+}
+
+.layerLegend {
+    position: absolute;
+    bottom: 96px;
+    left: 12px;
+    z-index: 999;
+    border: 2px solid #000;
+    cursor: pointer;
+}
+
+.legend-thumbnail {
+    width: 30px;
+    height: 30px;
+}
+
+.legend-large {
+    width: 320px;
+    height: 240px;
+}
+
+.tab-box {
+    /*width: 124px;*/
+    height: 19px;
+    line-height: 19px;
+    color: #74899f;
+    cursor: pointer;
+}
+
+.tab-box li {
+    width: 32px;
+    height: 60px;
+    border-radius: 1px;
+    padding-top: 5px;
+    text-align: center;
+    background: #ffffff;
+    white-space: nowrap;
+}
+
+.tab-box li.tab-active {
+    background-color: #1789ff;
+    box-shadow: 0px 1px 2px 0px rgba(0, 64, 126, 0.3);
+    color: #ffffff;
+}
+
+.left {
+    float: left;
+}
+
+.tab-img-vec {
+    position: absolute;
+    top: 242px;
+    /*right: 412px;*/
+    left: 10px;
+}
+
+.monitor_control {
+    margin-left: 11px;
+}
+
+.overall_control {
+    margin-left: 11px;
+}
+
+.district {
+    right: 335px;
+}
+
+/*图例*/
+.Controllayer {
+    position: absolute;
+    bottom: 45px;
+    /* top: 10px; */
+    left: 12px;
+    height: 38px;
+    line-height: 38px;
+    width: 887px;
+}
+
+.Controllayer .LegendIcon {
+    float: left;
+    width: 38px;
+    height: 38px;
+    box-shadow: 0px 2px 4px 0px rgba(37, 109, 255, 0.23);
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.Controllayer .ml50 {
+    margin-left: 50px;
+}
+
+.Controllayer .LegendIcon>a {
+    display: inline-block;
+    width: 100%;
+    height: 38px;
+    padding-left: 7px;
+}
+
+.SearchBox {
+    /*width: 393px;*/
+    width: 300px;
+    height: 38px;
+    position: absolute;
+    background: #ffffff;
+    top: 10px;
+    right: 10px;
+}
+
+.SearchBox .SearchSelect {
+    width: 108px;
+    float: left;
+}
+
+.SearchBox .SearchInput {
+    /*float: right;*/
+    float: left;
+}
+
+.SearchInput>input {
+    width: 215px;
+    width: 160px;
+    height: 38px;
+    border-radius: 0 0 0 0;
+    border: solid 1px #e1e7ed;
+    /*left: 107px;*/
+    position: absolute;
+    padding-right: 28px;
+}
+
+.SearchInput>button {
+    background: url(res/search.png) #1789ff 19px 4px no-repeat;
+    width: 70px;
+    height: 38px;
+    border-radius: 0 0 0 0;
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    right: 0px;
+}
+
+#search-result {
+    display: none;
+    height: calc(100% - 370px);
+    width: 393px;
+    top: 58px;
+    right: 10px;
+    background: #E6E6E6;
+    position: absolute;
+}
+
+.table-box {
+    position: absolute;
+    width: 300px;
+    top: 48px;
+    right: 10px;
+    display: none;
+}
+
+.table-box .layui-table-view {
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.layui-table-body {
+    overflow: hidden;
+}
+
+#close-btn {
+    width: 20px;
+    height: 28px;
+    padding-top: 11px;
+    padding-left: 5px;
+    padding-right: 5px;
+    /* background: orange; */
+    position: absolute;
+    right: 70px;
+    cursor: pointer;
+}
+
+/*图例相关*/
+
+body .Controllayer .Legendname1,
+body .Controllayer .LegendR1 .Legendcontent1,
+body .Controllayer .LegendR1 .shrink1 {
+    background: #ffffff;
+    border: 0;
+}
+
+body .Legend .LegendR .shrink {
+    background: url(/dist/style/res/sq1.png) #fff 0 18px no-repeat;
+}
+
+body .Controllayer .LegendR1 .shrink1 {
+    background: url(/dist/style/res/sq1.png) no-repeat;
+}
+
+.Controllayer label span {
+    color: #000000;
+}
+
+body .Controllayer .LegendR1 .shrink1 {
+    border-left: 1px solid #dadee4
+}
+
+body .Controllayer .Legendname1 {
+    float: left;
+    width: 38px;
+    height: 38px;
+
+    box-shadow: 0px 2px 4px 0px rgba(193, 197, 206, 0.23);
+    cursor: pointer;
+
+    box-sizing: border-box;
+}
+
+body .Controllayer .Legendname1>a {
+    display: inline-block;
+    width: 100%;
+    height: 38px;
+    padding-left: 7px;
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 {
+    float: left;
+    height: 38px;
+    box-shadow: 0px 2px 4px 0px rgba(37, 109, 255, 0.23);
+    padding: 0 10px;
+    box-sizing: border-box;
+    display: none;
+    /*复选框*/
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 .layui-form-pane .layui-input-block {
+    margin-left: 0;
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 .layui-form-pane .layui-form-checkbox {
+    margin-left: 0;
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 .layui-form-checkbox {
+    padding-left: 20px;
+    padding-right: 5px;
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 .layui-form-checkbox span {
+    font-size: 12px;
+    padding: 0;
+    float: right;
+}
+
+body .Controllayer .LegendR1 .Legendcontent1 .layui-form-checkbox .layui-icon {
+    width: 16px;
+    height: 16px;
+    float: right;
+    position: absolute;
+    left: 0;
+}
+
+body .Controllayer .LegendR1 .shrink1 {
+    float: left;
+    height: 38px;
+    width: 15px;
+    background: url(/dist/style/res/sq1.png) -1px 0 no-repeat;
+    margin-left: -3px;
+    box-shadow: 0px 2px 4px 0px rgba(37, 109, 255, 0.23);
+    box-sizing: border-box;
+    cursor: pointer;
+    display: none;
+}
+
+/*监控，全景点的marker样式*/
+.map_mark {
+    overflow: hidden;
+    height: 30px;
+    padding-top: 2px;
+    padding-left: 33px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.map_mark .map_mark_inner {
+    line-height: 22px;
+    position: relative;
+    z-index: 2;
+    left: -20px;
+    zoom: 1;
+    height: 22px;
+    padding: 0 10px 0 16px;
+    white-space: nowrap;
+    border: 1px solid #a1a19d;
+    border-left: 0 none;
+    border-top-right-radius: 13px;
+    border-bottom-right-radius: 13px;
+    background-color: #fff;
+    box-shadow: 2px 2px 2px 0 #ccc;
+}
+
+.map_mark .map_mark_name {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #06c;
+    font-size: 14px;
+}
+
+.map_mark .map_num {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 24px;
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    width: 25px;
+    height: 30px;
+    text-align: center;
+    color: #fff;
+    background: url(/dist/style/images/marker_bg.png) no-repeat;
+}

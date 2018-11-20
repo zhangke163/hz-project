@@ -1,0 +1,416 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/leaflet.css" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/MousePosition.css" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/leaflet.draw.css" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/map.css" media="all">
+</script>
+<style>
+    #map {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: calc(100% - 30px);
+        width: calc(100% - 30px);
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 300;
+        color: #ccc;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip{
+        box-shadow: 5px 2px 10px 0px #333;
+    }
+    #layout .layui-table td,
+    .layui-table th {
+        font-size: 8px;
+        padding: 5px 5px;
+    }
+    .videoBox{
+        width: auto;
+        height: auto;
+        z-index: -1;
+        position:absolute;
+        left: 100%;
+        top:0;
+        display: none;
+        overflow: hidden;
+       
+    }
+    .videoBox img{
+        height: 325px;
+    }
+    .videoBox .closeBtns{
+        position: absolute;
+        right: 0;
+        top:5px;
+        width: 30px;
+        height: 16px;
+        line-height: 15px;
+        background-color: #75b9ff;
+        z-index: 9999;
+        box-sizing: border-box;
+        color:#fff;
+        border-radius: 35px 0 0 35px;
+        cursor: pointer;
+    }
+</style>
+<div id="map">
+</div>
+<div class="layui-form" lay-filter="overallForm" style="padding: 20px 0 0 0;">
+    <div class="layui-form-item">
+        <script type="text/html" template>
+            <input type="hidden" id="id" value="{{ d.params.id || '' }}">
+            <input type="hidden" id="route" value="{{ d.params.route || '' }}">
+            <input type="hidden" id="river_name" value="{{ d.params.river_name || '' }}">
+            <input type="hidden" id="patrol_person" value="{{ d.params.userObj.name || '' }}">
+        </script>
+    </div>
+</div>
+<script>
+    layui.use(['admin', 'form', 'leaflet', 'proj4', 'proj4leaflet', 'wmtsTileLayer', 'esri-leaflet', 'mouse-position',
+        'leaflet.draw', 'table', 'jquery.poptrox.min'
+    ], function () {
+        var $ = layui.$,
+            setter = layui.setter;
+        var crs = new L.Proj.CRS("EPSG:4490", "+proj=longlat +ellps=GRS80 +no_defs", {
+            resolutions: [0.7031250000000002, 0.3515625000000001, 0.1757812500000000,
+                0.0878906250000000, 0.0439453125000000, 0.0219726562500000, 0.0109863281250000,
+                0.0054931640625000, 0.0027465820312500, 0.0013732910156250, 0.0006866455078125,
+                0.0003433227539063, 0.0001716613769531, 0.0000858306884766, 0.0000429153442383,
+                0.0000214576721191, 0.0000107288360596, 0.0000053644180298, 0.0000026822090149,
+                0.0000013411045074
+            ],
+            origin: [-180, 90],
+            bounds: L.bounds([-180, -90], [180, 90])
+        });
+
+        var map = L.map('map', {
+            crs: crs,
+            attributionControl: false,
+            continuousWorld: true,
+            center: {
+                lon: 120.18849,
+                lat: 30.78847
+            },
+            zoom: 10,
+            minZoom: 10,
+            maxZoom: 18,
+            maxBounds: [
+                [30.206, 118.974],
+                [31.275, 120.734]
+            ]
+        });
+
+        // 添加国家级天地图服务(EPSG:4490)
+        var vec = new L.TileLayer.WMTS('http://t0.tianditu.com/img_c/wmts', {
+            layer: 'img',
+            style: "default",
+            tilematrixSet: "c",
+            format: "tiles",
+            minZoom: 9,
+            maxZoom: 12
+        });
+        map.addLayer(vec);
+
+        var identifiedFeature = new L.featureGroup();
+        map.addLayer(identifiedFeature);
+        // 添加浙江省天地图服务(EPSG:4490)
+        var zjimg = new L.TileLayer.WMTS('http://srv0.zjditu.cn/ZJDOM_2D/wmts', {
+            layer: 'imgmap',
+            style: "default",
+            tilematrixSet: "default028mm",
+            format: "image/png",
+            maxZoom: 16
+        });
+        map.addLayer(zjimg);
+
+        // 添加湖州市天地图服务(EPSG:4490)
+        var hzimg = new L.TileLayer.WMTS('http://www.hzmaps.com/ogcservice/HUZIMG/service/wmts', {
+            layer: 'HUZIMG',
+            style: "default",
+            tilematrixSet: "TileMatrixSet0",
+            format: "image/png",
+            minZoom: 17,
+            maxZoom: 18
+        });
+        map.addLayer(hzimg);
+
+        // 水域专题地图服务
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [14, 15],
+            opacity: 1
+        }).addTo(map);
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [11, 12, 13, 16],
+            opacity: 1
+        }).addTo(map);
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [4],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [6],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [5],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [3],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [7],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [9],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [8],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [10],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [17],
+            opacity: 1
+        });
+        L.esri.dynamicMapLayer({
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [18],
+            opacity: 1
+        });
+
+        var startIcon = L.icon({
+            iconUrl: layui.setter.base+'style/images/start.png',
+            iconSize: [26, 41],
+            iconAnchor: [13, 41],
+            popupAnchor: [-3, -61]
+        });
+        var endIcon = L.icon({
+            iconUrl: layui.setter.base+'style/images/end.png',
+            iconSize: [26, 41],
+            iconAnchor: [13, 41],
+            popupAnchor: [-3, -61]
+        });
+        var questionIcon = L.icon({
+            iconUrl: layui.setter.base+'style/images/question.png',
+            iconSize: [26, 41],
+            iconAnchor: [13, 41],
+            popupAnchor: [-3, -61]
+        });
+        var handledIcon = L.icon({
+            iconUrl: layui.setter.base+'style/images/handled.png',
+            iconSize: [26, 41],
+            iconAnchor: [13, 41],
+            popupAnchor: [-3, -61]
+        });
+
+
+        $(function () {
+            setTimeout(function () {
+                identifiedFeature.clearLayers();
+                var id = $("#id").val();
+                var route = $("#route").val();
+                var level_name = $("#level_name").val();
+
+                var latlngs = [];
+                var latlngArr = route.split('_');
+                latlngArr.forEach(element => {
+                    latlngs.push([element.split(',')[1], element.split(',')[0]]);
+                });
+                var polyline = L.polyline(latlngs, { color: 'red' }).addTo(map);
+
+                var count = latlngs.length;
+                for (var i = 0; i < count; i++) {
+                    
+                    if (i == 0) {
+                        L.circleMarker(latlngs[i], { radius: 5, fill: true, stroke: false, fillColor: '#417def', fillOpacity: 1, fillRule: 'nonzero' }).addTo(map);
+                        L.marker(latlngs[i], {icon:startIcon}).addTo(map);
+                    }else if (i == count - 1) {
+                        L.circleMarker(latlngs[i], { radius: 5, fill: true, stroke: false, fillColor: '#417def', fillOpacity: 1, fillRule: 'nonzero' }).addTo(map);
+                        L.marker(latlngs[i], {icon:endIcon}).addTo(map);
+                    }
+                }
+
+
+                map.fitBounds(polyline.getBounds());
+
+                //todo:添加问题点
+                $.ajax({
+                    url: '/questions',
+                    type: 'get',
+                    data: {
+                        patrol_id: id
+                    },
+                    success: function (res) {
+                        var data = res.data;
+                        data.forEach(question => {
+                            var id = question.id;
+                            var content = question.content;
+                            var remark = question.remark;
+                            var location = question.location;
+                            var lat = parseFloat(location.split(',')[1]);
+                            var lng = parseFloat(location.split(',')[0]);
+                            question.lat = lat;
+                            question.lng = lng;
+                            if(question.status==-1){
+                                L.circleMarker([lat, lng], { radius: 5, fill: true, stroke: false, fillColor: '#f54336', fillOpacity: 1, fillRule: 'nonzero' }).addTo(map);
+                                question.icon = questionIcon;
+                                L.marker([lat, lng], question).addTo(identifiedFeature);
+                            }else{
+                                L.circleMarker([lat, lng], { radius: 5, fill: true, stroke: false, fillColor: '#00bd01', fillOpacity: 1, fillRule: 'nonzero' }).addTo(map);
+                                question.icon = handledIcon;
+                                var marker = L.marker([lat, lng], question).addTo(identifiedFeature);
+                            }
+                        });
+                    }
+
+                });
+
+                identifiedFeature.on('click', function (e) {
+                    var question = e.layer.options;
+                    var id = question.id;
+                    var content = question.content;
+                    var remark = question.remark;
+                    var status = question.status;
+                    var upload_time = question.upload_time;
+                    var handle_time = status == 1 ? question.handle_time : '未处理'
+
+
+                    var popup =
+                        "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                    popup +=
+                        "<tr><td width='20%'>上传时间 ：</td><td width='28%'><span class='orange'>" +
+                        upload_time +
+                        "</span></td><td width='20%'>处理时间 ：</td><td width='28%'><span class='orange'>" +
+                        handle_time + "</span></td></tr>";
+                    popup += "<tr><td>问题 ：</td><td colspan='3'><span class='orange'>" +
+                        content + " </span></td></tr>";
+                    popup += "<tr><td>备注 ：</td><td colspan='3'><span class='orange'>" +
+                        remark + " </span></td></tr>";
+                    $.ajax({
+                        url: '/files',
+                        type: 'get',
+                        data: {
+                            question_id: id
+                        },
+                        async: false,
+                        success: function (res) {
+                            var files = res.data;
+                            files.forEach(function (file) {
+                                popup +=
+                                    "<tr><td width='20%'>附件 ：</td><td width='28%'><span class='orange' onclick='deImg(event)' imgSrc=" +
+                                    file.path +
+                                    " style='cursor:pointer;'>点击查看</span></td><td width='20%'>上传时间 ：</td><td width='28%'><span class='orange'>" +
+                                    handle_time +
+                                    "</span></td></tr>";
+                            });
+                        }
+                    });
+                    popup += "</tbody></table>";
+                    L.popup({
+                            minWidth: 380,
+                            offset: L.point(0, -15)
+                        })
+                        .setLatLng([question.lat, question.lng])
+                        .setContent(popup)
+                        .openOn(map);
+                    var videoHtml =
+                        `<div class='videoBox'></div>`;
+                    $('.leaflet-popup-content').append(videoHtml);
+                });
+
+
+            }, 1);
+            //判断图片宽高比
+            function checkPicurl(url) {
+                var img = new Image();
+                img.src = url;
+                img.onerror = function () {
+                    alert(name + " 图片加载失败，请检查url是否正确");
+                    return false;
+                };
+                if (img.complete) {
+                    if (img.width < img.height) {
+                        $('.videoBox img').css('height', '325px');
+                    } else {
+                        $('.videoBox img').css('width', '425px');
+                    }
+                } else {
+                    img.onload = function () {
+                        if (img.width < img.height) {
+                            $('.videoBox img').css('height', '325px');
+                        } else {
+                            $('.videoBox img').css('width', '425px');
+                        }
+                        img.onload = null; //避免重复加载
+                    }
+                }
+            }
+            window.deImg = function (event) {
+                debugger
+                var e = event || window.event;
+                $('.videoBox').empty().css('display', 'block');
+                var btnHtml =
+                    `<div class='closeBtns' onclick='closeImg()'><i class="layui-icon layui-icon-left"></i></div>`;
+                $('.videoBox').append(btnHtml);
+                var _path = $(e.target).attr('imgSrc');
+                var str = $(e.target).attr('imgSrc');
+                var index = str.lastIndexOf("\.");
+                str = str.substring(index + 1, str.length);
+                if (str === 'jpg') {
+                    var _imgHtml = `<img src="${_path}"/>`;
+                    $('.videoBox').append(_imgHtml);
+                    checkPicurl(_path);
+                } else {
+                    var _videoHtml =
+                        `<video src="${_path}" controls="controls" height='325px;'>
+                         </video>`;
+                    $('.videoBox').append(_videoHtml);
+                }
+            }
+            window.closeImg = function () {
+                $('.videoBox').css('display', 'none');
+            }
+
+            function showMarker(lat, lng, title, name, map) {
+                var tooltip = "";
+                tooltip += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                tooltip += "<div name='marker' class='map_mark'>";
+                tooltip += "<span class='map_num'>" + title + "</span>";
+                tooltip += "<div class='map_mark_inner'>";
+                tooltip += "<span class='map_mark_name'>" + name + "</span>";
+                tooltip += " </div>";
+                tooltip += "</td></tr></table>";
+                var pointStyle = L.divIcon({
+                    iconAnchor: [8, 8],
+                    className: 'leaflet-divlabel',
+                    html: tooltip
+                });
+                L.marker([lat, lng], {
+                    icon: pointStyle
+                }).addTo(map);
+            }
+        });
+    });
+</script>

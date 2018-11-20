@@ -1,0 +1,161 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/index.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<div class="layui-fluid new-fluid" id="demoFluid">
+    <div class="layui-row layui-col-space15 new-row">
+        <div class="layui-col-md3">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md12 height-big">
+                    <div class="layui-card">
+                        <div class="layui-card-header">全市概况</div>
+                        <div class="layui-card-body" id="situation">
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">河道总量</div>
+                              <div class="info-val">3908</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">省级河道</div>
+                              <div class="info-val">8</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">市级河道</div>
+                              <div class="info-val">11</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">区级河道</div>
+                              <div class="info-val">38</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">区级以下河道</div>
+                              <div class="info-val">3775</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">水库</div>
+                              <div class="info-val">22</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">山塘</div>
+                              <div class="info-val">225</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">湖漾</div>
+                              <div class="info-val">167</div>
+                            </div>
+                          </div>
+                          <div class="data-info">
+                            <div class="info-box">
+                              <div class="info-name">池塘</div>
+                              <div class="info-val">1162</div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md12 height-small">
+                    <div class="layui-card">
+                        <div class="layui-card-header">湖州概况</div>
+                        <div class="layui-card-body">
+                            <div class="p-box">
+                              <p>湖州市地处浙江省北部，杭嘉湖平原西侧；东与江苏省吴江市和本省嘉兴桐庐市接壤；南与杭州市余杭区、临安市相连；西倚天目山，与安徽省广德县、宁国县交界；西北与江苏省宜兴市相邻；北濒太湖，与江苏省无锡市、苏州市滆湖相望。</p>
+                              <p>全市东西长度126km，南北宽度90km，土地总面积5818km2，境内水体主要包括苕溪水系、杭嘉湖平原水系和长兴平原水系三部分。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md9">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md6 height-normal">
+                    <div class="layui-card">
+                        <div class="layui-card-header">河道统计</div>
+                        <div class="layui-card-body">
+                            <div id="btn-items1" class="btn-items">
+                                <button class="active">按等级</button>
+                                <button>按行政区</button>
+                            </div>
+                            <div id="echarts_box1" class="echarts-box">
+                                <div></div>
+                                <div style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md6 height-normal">
+                    <div class="layui-card">
+                        <div class="layui-card-header">湖漾统计</div>
+                        <div class="layui-card-body">
+                            <div class="btn-item">
+                                <button class="active">按行政区</button>
+                            </div>
+                            <div id="lake" class="echarts-box">
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 height-normal">
+                    <div class="layui-card">
+                        <div class="layui-card-header">水库统计</div>
+                        <div class="layui-card-body">
+                            <div id="btn-items2" class="btn-items">
+                                <button class="active">按等级</button>
+                                <button>按行政区</button>
+                            </div>
+                            <div id="echarts_pie" class="echarts-box">
+                                <div></div>
+                                <div style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 height-normal">
+                    <div class="layui-card">
+                        <div class="layui-card-header">山塘统计</div>
+                        <div class="layui-card-body">
+                            <div id="btn-items3" class="btn-items">
+                                <button class="active">按等级</button>
+                                <button>按行政区</button>
+                            </div>
+                            <div id="echarts_mountain" class="echarts-box">
+                                <div></div>
+                                <div style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 height-normal">
+                    <div class="layui-card">
+                        <div class="layui-card-header">池塘统计</div>
+                        <div class="layui-card-body">
+                            <div class="btn-item">
+                                <button class="active">按行政区</button>
+                            </div>
+                            <div id="pool" class="echarts-box">
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    layui.use('homePage', layui.factory('homePage'));
+</script>

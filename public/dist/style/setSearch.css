@@ -1,0 +1,6 @@
+.layui-form-pane {
+	overflow: hidden;
+}
+.layui-form-pane .layui-inline .layui-inline {
+	left: -1px;
+}

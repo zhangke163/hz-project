@@ -1,0 +1,160 @@
+<script type="text/html" template>
+  <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<title>湖漾列表</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>水域专题</cite>
+        </a>
+        <a>
+            <cite>湖漾</cite>
+        </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-river">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">行政区</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="district_name" type="text" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label">名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            
+            <button class="layui-btn" id="btn-search">搜索</button>
+            <button class="layui-btn" id="btn-exportExcel" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">湖漾列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-subject-river-all" lay-filter="trigger"></table>
+                    <script type="text/html" id="tableTool">
+                        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    layui.use(['admin', 'table', 'util', 'form'], function () {
+        var $ = layui.$,
+            admin = layui.admin,
+            table = layui.table,
+            element = layui.element,
+            setter = layui.setter,
+            form = layui.form,
+            view = layui.view;
+
+        var DISABLED = 'layui-btn-disabled';
+
+        //全部消息
+        var table_name = table.render({
+            elem: '#LAY-subject-river-all',
+            url: '/lakes', //模拟接口
+            page: true,
+            even: false,
+            cols: [
+                [
+                {type: 'numbers', title: '序号', width: 50, align: 'center'},
+                    {field: 'district', title: '行政区', width: 100, align: 'center'},
+                    {field: 'name', title: '名称', width: 120},
+                    {field: 'area', title: '面积(m2)', width:100, align: 'center'},
+                    {field: 'storage', title: '容积(万m3)', width: 100, align: 'center'},
+                    {field: 'remark', title: '备注' , width: 400, align: 'center'},
+                    {
+                        title: '操作',
+                        width: 120,
+                        fixed: 'right',
+                        align: 'center',
+                        toolbar: '#tableTool'
+                    }
+                ]
+            ],
+            limit: 10
+        });
+
+        /*绑定事件*/
+        table.on('tool(trigger)', function(obj) {
+
+            var data = obj.data;
+            data.type="lake";
+            var layEvent = obj.event;
+            //定位
+            if(layEvent === 'locate') {
+                /*定位*/
+                zoomRow(data);
+            }
+        });
+
+        var _district = '', _name = '';
+
+        $('#btn-search').click(function() {
+            _district = $('input[name="district_name"]').val();
+            _name = $('input[name="name"]').val();
+
+            table_name.reload({
+                where: {
+                    district: $('input[name="district_name"]').val(),
+                    name: $('input[name="name"]').val()
+                }
+            });
+
+            return false;
+        });
+
+        function exportTable(data) {
+            var arr = [];
+            data.forEach(element => {
+                arr.push([ element.district, element.name, element.area, element.storage, element.remark]);
+            });
+            table.exportFile(['行政区', '名称', '面积(m2)', '容积(万m3)', '备注'], arr, 'xls');
+        }
+
+        //导出空间查询结果excel，最新版的table支持该方法
+        form.on('submit(exportExcel)', function () {
+            
+            $.ajax({
+                url: '/lakes?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request.tokenName],
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    district: _district,
+                    name: _name,
+                    limit: 5000
+                },
+                success: function (data) {
+                    // console.log(data.data);
+                    exportTable(data.data);
+                }
+            });
+
+            return false;
+        });
+
+        function zoomRow(data) {
+            admin.popup({
+                title: '定位'
+                ,area: ['1000px', '600px']
+                ,success: function(){
+                    view(this.id).render('senior/water/location', data).done(function(){
+
+                    });
+                }
+            });
+        }
+
+    });
+</script>

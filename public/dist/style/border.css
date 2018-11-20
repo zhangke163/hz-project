@@ -1,0 +1,73 @@
+.layui-input, .layui-textarea{
+    margin-left: -1px;
+}
+
+.info-body, .chart-body {
+	overflow: hidden;
+	padding: 20px 15px;
+	height: 310px;
+	box-sizing: border-box;
+}
+
+.chart-body {
+	padding: 10px 15px;
+}
+
+.data-box {
+	padding: 0 20px;
+	height: 80px;
+  background-color: #f8f8f8;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.data-bg {
+	float: left;
+	width: 36px;
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+	margin-right: 10px;
+}
+
+.data-bg > img {
+	width: 100%;
+}
+
+.data-info {
+	float: left;
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+	width: calc(100% - 46px);
+	/*text-align: right;*/
+}
+
+.info-name {
+	font-size: 14px;
+  letter-spacing: 0px;
+  color: #999999;
+  margin-bottom: 3px;
+}
+
+.info-val {
+	font-size: 28px;
+  letter-spacing: 0px;
+  color: #009688;
+}
+
+.info-val > span {
+	font-size: 14px;
+  letter-spacing: 0px;
+  color: #333;
+}
+
+@media screen and (min-width:1280px) and (max-width:1450px){
+	.layui-col-md2 {
+		width: 25%;
+	}
+
+	.layui-col-md10 {
+		width: 75%;
+	}
+}

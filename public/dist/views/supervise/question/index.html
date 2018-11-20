@@ -1,0 +1,121 @@
+<title>
+  巡查问题</title>
+  <script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+    </script>
+<div class="layui-card layadmin-header">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb">
+    <a lay-href="">主页</a>
+    <a>
+      <cite>项目监管</cite>
+    </a>
+    <a>
+      <cite>巡查问题</cite>
+    </a>
+  </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-question">
+  <blockquote class="layui-elem-quote" style="background-color: #fff">
+    <div class="searchTable layui-form-pane">
+      <div class="layui-inline">
+        <label class="layui-form-label">问题内容</label>
+        <div class="layui-inline">
+          <input class="layui-input" name="content" type="text" autocomplete="off">
+        </div>
+      </div>
+      <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+    </div>
+  </blockquote>
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">巡查河段列表</div>
+        <div class="layui-card-body">
+          <table id="LAY-supervise-question-all" lay-filter="LAY-supervise-question-all"></table>
+        </div>
+        <script type="text/html" id="questionTable">
+          <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          </script>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['admin', 'table', 'util'], function () {
+    var $ = layui.$,
+      admin = layui.admin,
+      setter = layui.setter,
+      table = layui.table,
+      element = layui.element,
+      setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+
+    //全部消息
+    var table_name = table.render({
+      elem: '#LAY-supervise-question-all',
+      url: '/questions',
+      page: true,
+      even: true,
+      cols: [
+        [
+          {
+            field: 'content',
+            title: '问题内容',
+            align: 'center',
+          },
+          {
+            field: 'status',
+            title: '状态',
+            width: 200,
+            align: 'center'
+          },
+          {
+            field: 'upload_time',
+            title: '上传时间',
+            width: 200,
+            align: 'center'
+          },
+          {
+            field: 'handle_time',
+            title: '处理时间',
+            width: 200,
+            align: 'center'
+          },
+          {
+            fixed: 'right',
+            title: '操作',
+            width: 178,
+            align: 'center',
+            templet: '#questionTable'
+          }
+        ]
+      ],
+      limit: 10
+    });
+    /*绑定事件*/
+    table.on('tool(LAY-supervise-question-all)', function (obj) {
+      var data = obj.data;
+      var layEvent = obj.event;
+      var rowId = data.id;
+      if (layEvent === 'edit') {
+        layer.open({
+          title: '编辑',
+          type: 2,
+          content: layui.setter.base + 'views/supervise/question/edit.html?id=' + rowId,
+          area: ['681px', '600px']
+        })
+
+      }
+    });
+    //查询功能
+    $('#btn-search').click(function () {
+      table_name.reload({
+        where: {
+          content: $('input[name=content]').val()
+        }
+      });
+      return false;
+    });
+  });
+</script>

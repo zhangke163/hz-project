@@ -1,0 +1,42 @@
+<link rel="stylesheet" href="../../../../start/layui/css/layui.css" media="all">
+<link rel="stylesheet" href="../../../style/pop.css" media="all">
+<style>
+    .layui-input, .layui-textarea{
+        width:220px;
+    }
+</style>
+<div class="layui-fluid">
+    <div class="layui-card-body">
+        <div>
+            <form class="layui-form" action="">
+                <div class="new-form-item">
+                    <label class="layui-form-label">字典类别</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='type' value='district' disabled>
+                    </div>
+                </div>
+                <div class="new-form-item">
+                    <label class="layui-form-label">中文名称</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='name'>
+                    </div>
+                </div>
+                <div class="new-form-item">
+                    <label class="layui-form-label">系统代码</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='cipher'>
+                    </div>
+                </div>
+                <div class="new-form-item">
+                    <div class="layui-input-block new-input btn-bottom">
+                        <button class="layui-btn cancle">取消</button>
+                        <button class="layui-btn yes" lay-submit="" lay-filter="confirmBtn">确认</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="../../../../start/layui/layui.all.js"></script>
+<script src="../../../config.js"></script>
+<script src='../../../controller/dictadd.js'></script>

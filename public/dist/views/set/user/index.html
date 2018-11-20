@@ -1,0 +1,259 @@
+<title>系统设置</title>
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+  </script>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+      <cite>系统设置</cite>
+    </a>
+        <a>
+      <cite>用户管理</cite>
+    </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-set-user">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="nickname" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">单位名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="orgnization" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">岗位</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="position" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+            <button class="layui-btn" id="btn-add">新增</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">用户列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-set-user-all" lay-filter="LAY-set-user-all"></table>
+                </div>
+                <script type="text/html" id="userTable">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="enabledTpl">
+    {{#  if(d.enabled == true){ }}
+    <div style='color:green'>正常</div>
+  {{#  } else { }}
+  <div style='color:red'>冻结</div>
+  {{#  } }}
+  <!-- <input type="checkbox" name="lock" value="{{d.enabled}}"  lay-skin="switch" lay-filter="enabled" {{ d.enabled ? 'checked' : '' }} lay-text="正常|异常" disabled> -->
+</script>
+<script type="text/html" id="isAdminTpl">
+    {{#  if(d.is_admin == true){ }}
+    <div style='color:green'>是</div>
+  {{#  } else { }}
+  <div style='color:red'>否</div>
+  {{#  } }}
+  <!-- <input type="checkbox" name="lock" value="{{d.is_admin}}" title="是" lay-filter="is_admin" {{ d.is_admin ? 'checked' : '' }}> -->
+</script>
+<script>
+layui.use(['admin', 'table', 'util'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        setter = layui.setter,
+        table = layui.table,
+        element = layui.element,
+        setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+    //全部消息
+    var table_name = table.render({
+        elem: '#LAY-set-user-all',
+        url: '/users?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request.tokenName], //模拟接口
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    width: 50,
+                    align: 'center',
+                    fixed: 'left'
+                }, {
+                    field: 'district',
+                    title: '行政区',
+                    width: 100,
+                    align: 'center',
+                    sort: true,
+                    fixed: 'left'
+                },
+                {
+                    field: 'orgnization',
+                    title: '单位名称',
+                    width: 120,
+                    align: 'center',
+                    sort: true,
+                    fixed: 'left'
+                },
+                {
+                    field: 'name',
+                    title: '姓名',
+                    width: 100,
+                    align: 'center',
+                    fixed: 'left'
+                },
+                {
+                    field: 'position',
+                    title: '岗位',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'phone',
+                    title: '手机',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'nickname',
+                    title: '用户名',
+                    width: 100,
+                    align: 'center'
+                },
+                {
+                    field: 'enabled',
+                    title: '账号状态',
+                    width: 100,
+                    align: 'center',
+                    templet: '#enabledTpl'
+                },
+                {
+                    field: 'is_admin',
+                    title: '是否管理员',
+                    width: 100,
+                    align: 'center',
+                    templet: '#isAdminTpl'
+                },
+                {
+                    field: 'role_id',
+                    title: '角色名称',
+                    width: 100,
+                    align: 'center',
+                    templet: function(d) {
+                        var result = '';
+                        $.ajax({
+                            url: '/roles?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request
+                                .tokenName],
+                            type: 'get',
+                            data: '',
+                            async: true,
+                            success: function(res) {
+                                $.each(res.data, function(index, value) {
+                                    if (d.role_id == value.id) {
+                                        result = value.name;
+                                    }
+                                })
+                            }
+                        })
+                        return result;
+                    }
+                },
+                {
+                    field: 'updated_at',
+                    title: '最后修改时间',
+                    width: 150,
+                    align: 'center',
+                    templet: '<div>{{ layui.util.timeAgo(d.updated_at) }}</div>'
+                },
+                {
+                    field: 'created_at',
+                    title: '创建时间',
+                    width: 150,
+                    align: 'center',
+                    templet: '<div>{{ layui.util.timeAgo(d.created_at) }}</div>'
+                },
+                {
+                    fixed: 'right',
+                    title: '操作',
+                    width: 180,
+                    align: 'center',
+                    templet: '#userTable'
+                }
+            ]
+        ],
+        limit: 10
+    });
+
+    $('#btn-add').on('click', function(event) {
+        event.preventDefault();
+        layer.open({
+            title: '新增',
+            type: 2,
+            content: layui.setter.base + 'views/set/user/add.html',
+            area: ['790px', '465px']
+        })
+    });
+    /*绑定事件*/
+    table.on('tool(LAY-set-user-all)', function(obj) {
+        var data = obj.data;
+        var layEvent = obj.event;
+        var rowId = data.id;
+        if (layEvent === 'edit') {
+            layer.open({
+                title: '编辑',
+                type: 2,
+                content: layui.setter.base + 'views/set/user/edit.html?id=' + rowId,
+                area: ['681px', '600px']
+            })
+
+        } else if (layEvent === 'del') { //删除
+            layer.confirm('确定删除该条记录？', function(index) {
+                obj.del();
+                layer.close(index);
+                //向服务端发送删除指令
+                $.ajax({
+                    url: '/user/' + rowId + '?' + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[setter.request.tokenName],
+                    type: 'delete',
+                    success: function(res) {
+                        layer.msg('删除成功！', {
+                            icon: 1,
+                            time: 1000
+                        }, function() {
+                            table.reload('LAY-set-user-all', {
+                                page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            });
+                        });
+                    }
+                })
+            });
+        }
+    });
+    //查询功能
+    $('#btn-search').click(function() {
+        table_name.reload({
+            where: {
+                nickname: $('input[name=nickname]').val(),
+                orgnization: $('input[name=orgnization]').val(),
+                position: $('input[name=position]').val()
+            }
+        });
+        return false;
+    });
+});
+</script>

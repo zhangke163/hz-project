@@ -1,0 +1,70 @@
+<link rel="stylesheet" href="../../../../start/layui/css/layui.css" media="all">
+<link rel="stylesheet" href="../../../style/add.css" media="all">
+
+<div class="layui-fluid">
+    <div class="layui-card-body">
+        <div>
+            <form class="layui-form" action="" lay-filter="search-form">
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">行政区</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">单位名称</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">姓名</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">岗位</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">手机</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="">
+                    </div>
+                </div>
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">账号状态</label>
+                    <div class="layui-input-block new-input">
+                        <select name="city" lay-verify="required">
+                            <option value=""></option>
+                            <option value="1>正常</option>
+                            <option value="0">冻结</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">是否管理员</label>
+                    <div class="layui-input-block new-input">
+                        <select name="city" lay-verify="required">
+                            <option value=""></option>
+                            <option value="1">是</option>
+                            <option value="0">否</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="../../../../start/layui/layui.all.js"></script>
+<script src="../../../config.js"></script>
+<script src='../../../controller/useradd.js'></script>

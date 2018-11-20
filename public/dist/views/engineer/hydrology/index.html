@@ -1,0 +1,170 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/setSearch.css?v={{ layui.admin.v }}-1" media="all">
+</script>
+<title>水质站列表</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+      <cite>水利工程</cite>
+    </a>
+        <a>
+      <cite>水文站</cite>
+    </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-subject-hydrology">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">测站名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search">搜索</button>
+            <button class="layui-btn" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">水文站列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-subject-hydrology-all" lay-filter="trigger"></table>
+                    <script type="text/html" id="tableTool">
+                        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locate">定位</a>
+        </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'util', 'form'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        table = layui.table,
+        form = layui.form,
+        element = layui.element,
+        view = layui.view,
+        setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+    //调用表格数据
+    $.ajax({
+        url: '/hydrology',
+        type: 'GET',
+        data: {
+            'page': '1',
+            'limit': '100000000000'
+        },
+        async: true,
+        success: function(result) {
+            renderTable(result.data);
+        },
+        error: function(err) {
+
+        }
+    });
+    var table_name = table.render({
+        elem: '#LAY-subject-hydrology-all',
+        url: '/hydrology',
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    width: 50,
+                    align: 'center'
+                }, {
+                    field: 'name',
+                    title: '测站名称',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'type',
+                    title: '测站类别',
+                    align: 'center',
+                    width: 200,
+                    sort: true
+                },
+                {
+                    field: 'target',
+                    align: 'left',
+                    title: '观测项目',
+                    width: 300
+                },
+                {
+                    title: '操作',
+                    width: 120,
+                    fixed: 'right',
+                    align: 'center',
+                    toolbar: '#tableTool'
+                }
+            ]
+        ],
+        limit: 10
+    });
+    var names = '';
+    $('#btn-search').click(function() {
+        table_name.reload({
+            where: {
+                name: $('input[name="name"]').val()
+            }
+        });
+        names = $('input[name="name"]').val();
+        return false;
+    });
+
+    function renderTable(tableData) {
+        //导出
+        form.on('submit(exportExcel)', function() {
+            $.ajax({
+                url: '/hydrology',
+                type: 'GET',
+                data: {
+                    'page': '1',
+                    'limit': '100000000000',
+                    'name': names
+                },
+                async: false,
+                success: function(result) {
+                    var arr = [];
+                    result.data.forEach(element => {
+                        arr.push([element.name, element.type, element.target])
+                    });
+                    table.exportFile(['测站名称', '测站类别', '观测项目'], arr, 'xls');
+                },
+                error: function(err) {
+
+                }
+            });
+
+            return false;
+        });
+    }
+
+
+    /*绑定事件*/
+    table.on('tool(trigger)', function(obj) {
+        var data = obj.data;
+        data.type = "hydrology";
+        var layEvent = obj.event;
+        if (layEvent === 'locate') {
+            admin.popup({
+                title: '定位',
+                area: ['1000px', '600px'],
+                shade: 0.2,
+                success: function() {
+                    view(this.id).render('senior/water/location', data).done(function() {
+
+                    });
+                }
+            });
+        }
+    });
+});
+</script>

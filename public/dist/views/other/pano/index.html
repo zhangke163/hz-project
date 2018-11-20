@@ -1,0 +1,77 @@
+<title>
+  角色管理</title>
+<div class="layui-card layadmin-header">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb">
+    <a lay-href="">主页</a>
+    <a>
+      <cite>系统设置</cite>
+    </a>
+    <a>
+      <cite>角色管理</cite>
+    </a>
+  </div>
+</div>
+<div class="layui-fluid" id="LAY-set-user">
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">角色列表</div>
+        <div class="layui-card-body">
+          <table id="LAY-set-role-all" lay-filter="LAY-set-role-all"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/html" id="opTpl">
+  <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>
+  <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+layui.use(['admin', 'table', 'util'], function() {
+  var $ = layui.$,
+    admin = layui.admin,
+    setter = layui.setter,
+    table = layui.table,
+    element = layui.element,
+    setter = layui.setter;
+
+  var DISABLED = 'layui-btn-disabled';
+
+  //全部消息
+  table.render({
+    elem: '#LAY-set-role-all',
+    url: setter.apiUrl + 'roles?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request.tokenName], //模拟接口
+    page: true,
+    even: true,
+    cols: [
+      [
+        { type: 'checkbox', fixed: 'left' },
+        { field: 'name', title: '角色名', width: 90, align: 'center' },
+        {
+          field: 'created_at',
+          title: '创建时间',
+          width: 150,
+          align: 'center',
+          templet: '<div>{{ layui.util.timeAgo(d.created_at) }}</div>'
+        },
+        {
+          field: 'updated_at',
+          title: '最后修改时间',
+          width: 150,
+          align: 'center',
+          templet: '<div>{{ layui.util.timeAgo(d.updated_at) }}</div>'
+        },
+        {
+          fixed: 'right',
+          title: '操作',
+          templet: '#opTpl'
+        }
+      ]
+    ],
+    limit: 10
+  });
+
+});
+</script>

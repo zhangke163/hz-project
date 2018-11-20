@@ -1,0 +1,50 @@
+<link rel="stylesheet" href="../../../../start/layui/css/layui.css" media="all">
+<link rel="stylesheet" href="../../../style/pop.css" media="all">
+
+<div class="layui-fluid">
+    <div class="layui-card-body" style='margin-top:-20px;'>
+        <div>
+            <form class="layui-form" action="" lay-filter="edit-form">
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">河段名称</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='river_name'>
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">开始河段</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='start'>
+                    </div>
+                </div>
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">结束河段</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='end'>
+                    </div>
+                </div>
+                <div class="new-form-item layer-right">
+                    <label class="layui-form-label">巡查人</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='charge'>
+                    </div>
+                </div>
+                <div class="new-form-item layer-left">
+                    <label class="layui-form-label">电话</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='tel'>
+                    </div>
+                </div>
+                <div class="new-form-item">
+                    <div class="layui-input-block new-input btn-bottom">
+                        <button class="layui-btn cancle">取消</button>
+                        <button class="layui-btn yes" lay-submit="" lay-filter="confirmBtn">确认</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="../../../../start/layui/layui.all.js"></script>
+<script src="../../../config.js"></script>
+<script src='../../../controller/arrangeedit.js'></script>

@@ -1,0 +1,175 @@
+<title>
+    巡查排班</title>
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+    </script>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+      <cite>项目监管</cite>
+    </a>
+        <a>
+      <cite>巡查排班</cite>
+    </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-arrange">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">河段名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="river_name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">巡查人</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="charge" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+            <button class="layui-btn" id="btn-add">新增</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">巡查河段列表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-supervise-arrange-all" lay-filter="LAY-supervise-arrange-all"></table>
+                </div>
+                <script type="text/html" id="arrangeTable">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'util'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        setter = layui.setter,
+        table = layui.table,
+        element = layui.element,
+        setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+
+    //全部消息
+    var table_name = table.render({
+        elem: '#LAY-supervise-arrange-all',
+        url: '/arranges',
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    align: 'center',
+                    width: 50
+                }, {
+                    field: 'river_name',
+                    title: '河段名称',
+                    align: 'center',
+                    width: 150
+                },
+                {
+                    field: 'start',
+                    title: '起点',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'end',
+                    title: '终点',
+                    width: 120,
+                    align: 'center'
+                },
+                {
+                    field: 'charge',
+                    title: '巡查人',
+                    width: 100,
+                    align: 'center'
+                },
+                {
+                    field: 'tel',
+                    title: '联系电话',
+                    align: 'center',
+                    width: 120,
+                },
+                {
+                    fixed: 'right',
+                    title: '操作',
+                    width: 160,
+                    align: 'center',
+                    templet: '#arrangeTable'
+                }
+            ]
+        ],
+        limit: 10
+    });
+    // 新增
+    $('#btn-add').click(function(event) {
+        event.preventDefault();
+        layer.open({
+            title: '新增',
+            type: 2,
+            content: layui.setter.base + 'views/supervise/arrange/add.html',
+            area: ['790px', '465px']
+        })
+    })
+    /*绑定事件*/
+    table.on('tool(LAY-supervise-arrange-all)', function(obj) {
+        var data = obj.data;
+        var layEvent = obj.event;
+        var rowId = data.id;
+        if (layEvent === 'edit') {
+            layer.open({
+                title: '编辑',
+                type: 2,
+                content: layui.setter.base + 'views/supervise/arrange/edit.html?id=' + rowId,
+                area: ['681px', '600px']
+            })
+
+        } else if (layEvent === 'del') { //删除
+            layer.confirm('确定删除该条记录？', function(index) {
+                console.log(rowId);
+                obj.del();
+                layer.close(index);
+                //向服务端发送删除指令
+                $.ajax({
+                    url: '/arrange/' + rowId + '?' + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[setter.request.tokenName],
+                    type: 'delete',
+                    success: function(res) {
+                        layer.msg('删除成功！', {
+                            icon: 1,
+                            time: 1000
+                        }, function() {
+                            table.reload('LAY-supervise-arrange-all', {
+                                page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            });
+                        });
+                    }
+                })
+            });
+        }
+    });
+    //查询功能
+    $('#btn-search').click(function() {
+        table_name.reload({
+            where: {
+                river_name: $('input[name=river_name]').val(),
+                charge: $('input[name=charge]').val()
+            }
+        });
+        return false;
+    });
+});
+</script>

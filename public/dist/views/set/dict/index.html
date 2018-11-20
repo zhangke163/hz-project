@@ -1,0 +1,155 @@
+<title>
+    数据字典</title>
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+  </script>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+      <cite>系统设置</cite>
+    </a>
+        <a>
+      <cite>数据字典</cite>
+    </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-set-dict">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <div class="layui-inline">
+                <label class="layui-form-label">中文名称</label>
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" type="text" autocomplete="off">
+                </div>
+            </div>
+            <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+            <button class="layui-btn" id="btn-add">新增</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">数据字典表</div>
+                <div class="layui-card-body">
+                    <table id="LAY-set-dict-all" lay-filter="LAY-set-dict-all"></table>
+                </div>
+                <script type="text/html" id="opTpl">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+layui.use(['admin', 'table', 'util'], function() {
+    var $ = layui.$,
+        admin = layui.admin,
+        setter = layui.setter,
+        table = layui.table,
+        element = layui.element,
+        setter = layui.setter;
+
+    var DISABLED = 'layui-btn-disabled';
+
+    //全部消息
+    var table_name = table.render({
+        elem: '#LAY-set-dict-all',
+        url: '/dicts?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request.tokenName], //模拟接口
+        page: true,
+        even: false,
+        cols: [
+            [{
+                    type: 'numbers',
+                    title: '序号',
+                    align: 'center',
+                    width: 50
+                }, {
+                    field: 'type',
+                    title: '字典类别',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'name',
+                    title: '中文名称',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    field: 'cipher',
+                    title: '系统代码',
+                    align: 'center',
+                    width: 120
+                },
+                {
+                    fixed: 'right',
+                    title: '操作',
+                    width: 180,
+                    align: 'center',
+                    templet: '#opTpl'
+                }
+            ]
+        ],
+        limit: 10
+    });
+    $('#btn-add').on('click', function(event) {
+        event.preventDefault();
+        layer.open({
+            title: '新增',
+            type: 2,
+            content: layui.setter.base + 'views/set/dict/add.html',
+            area: ['350px', '350px']
+        })
+    });
+    /*绑定事件*/
+    table.on('tool(LAY-set-dict-all)', function(obj) {
+        var data = obj.data;
+        var layEvent = obj.event;
+        var rowId = data.id;
+        if (layEvent === 'edit') { //编辑
+            layer.open({
+                title: '编辑',
+                type: 2,
+                content: layui.setter.base + 'views/set/dict/edit.html?id=' + rowId,
+                area: ['350px', '350px']
+            })
+        } else if (layEvent === 'del') { //删除
+            layer.confirm('确定删除该条记录？', function(index) {
+                obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                layer.close(index);
+                //向服务端发送删除指令
+                $.ajax({
+                    url: '/dict/' + rowId + '?' + setter.request.tokenName + '=' + layui.data(setter
+                        .tableName)[setter.request.tokenName],
+                    type: 'delete',
+                    success: function(res) {
+                        layer.msg('删除成功！', {
+                            icon: 1,
+                            time: 1000
+                        }, function() {
+                            table.reload('LAY-set-dict-all', {
+                                page: {
+                                    curr: 1 //重新从第 1 页开始
+                                }
+                            });
+                        });
+                    }
+                })
+            });
+        }
+    });
+    //查询功能
+    $('#btn-search').click(function() {
+        table_name.reload({
+            where: {
+                type: $('input[name=type]').val(),
+                name: $('input[name=name]').val(),
+                cipher: $('input[name=cipher]').val()
+            }
+        });
+        return false;
+    });
+});
+</script>

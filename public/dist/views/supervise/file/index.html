@@ -1,0 +1,95 @@
+<title>
+  问题拍照</title>
+  <script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/border.css?v={{ layui.admin.v }}-1" media="all">
+    </script>
+<div class="layui-card layadmin-header">
+  <div class="layui-breadcrumb" lay-filter="breadcrumb">
+    <a lay-href="">主页</a>
+    <a>
+      <cite>项目监管</cite>
+    </a>
+    <a>
+      <cite>问题拍照</cite>
+    </a>
+  </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-file">
+  <blockquote class="layui-elem-quote" style="background-color: #fff">
+    <div class="searchTable layui-form-pane">
+      <div class="layui-inline">
+        <label class="layui-form-label">文件名称</label>
+        <div class="layui-inline">
+          <input class="layui-input" name="filename" type="text" autocomplete="off">
+        </div>
+      </div>
+      <button class="layui-btn" id="btn-search" data-type='btnSearch'>搜索</button>
+    </div>
+  </blockquote>
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header">巡查河段列表</div>
+        <div class="layui-card-body">
+          <table id="LAY-supervise-file-all" lay-filter="LAY-supervise-file-all"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['admin', 'table', 'util', 'form', 'laydate'], function () {
+    var $ = layui.$,
+      admin = layui.admin,
+      setter = layui.setter,
+      table = layui.table,
+      form = layui.form,
+      laydate = layui.laydate
+    element = layui.element,
+      setter = layui.setter;
+    laydate.render({
+      elem: '#upload_time' //指定元素
+        ,
+      type: 'datetime'
+    });
+    var DISABLED = 'layui-btn-disabled';
+
+    //全部消息
+    var table_name = table.render({
+      elem: '#LAY-supervise-file-all',
+      url: '/files',
+      page: true,
+      even: true,
+      cols: [
+        [{
+            field: 'filename',
+            title: '文件名称',
+            align: 'center',
+            width: 260
+          },
+          {
+            field: 'path',
+            title: '路径',
+            align: 'center'
+          },
+          {
+            field: 'upload_time',
+            title: '上传时间',
+            width: 260,
+            align: 'center'
+          }
+        ]
+      ],
+      limit: 10
+    });
+    //查询功能
+    $('#btn-search').click(function () {
+      table_name.reload({
+        where: {
+          filename: $('input[name=filename]').val()
+        }
+      });
+      return false;
+    });
+  });
+</script>

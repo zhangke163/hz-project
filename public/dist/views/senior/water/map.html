@@ -1,0 +1,2243 @@
+<script type="text/html" template>
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/leaflet.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/MousePosition.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/leaflet.draw.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/Control.Opacity.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/map.css" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/leaflet.groupedlayercontrol.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/MarkerCluster.css?v={{ layui.admin.v }}-1" media="all">
+    <link rel="stylesheet" href="{{ layui.setter.base }}style/MarkerCluster.Default.css?v={{ layui.admin.v }}-1" media="all">
+
+<title>地图</title>
+</script>
+<style>
+
+    #map {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: calc(100% - 30px);
+        width: calc(100% - 30px);
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 300;
+        color: #ccc;
+        z-index: 0;
+    }
+    .layui-table-page{
+        width:260px;
+    }
+    #exportExcel{
+        position: absolute;
+        bottom: 11px;
+        right: 1px;
+        z-index: 999;
+    }
+    #exportExcel1{
+        position: absolute;
+        bottom: 21px;
+        right: 6px;
+        z-index: 999;
+    }
+</style>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>地图</cite>
+        </a>
+    </div>
+</div>
+
+<div id="map">
+</div>
+
+<div class="layui-form" lay-filter="controlLayer">
+    <div class="Controllayer">
+
+        <div class="Legendname1">
+            <a href="javascript:;"><img src="/dist/style/res/tckz.png" alt="" title='图层'></a>
+        </div>
+        <div class="LegendR1">
+            <div class="Legendcontent1">
+                <input type="checkbox" name="layerCheckbox" title="河道" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="湖漾" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="池塘" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="水库" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="山塘" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="泵站" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="水闸" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="堤防" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="圩区" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="水文" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="水质" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="河道范围线" lay-skin="primary">
+                <input type="checkbox" name="layerCheckbox" title="区级界线" lay-skin="primary" checked>
+                <input type="checkbox" name="layerCheckbox" title="乡镇界线" lay-skin="primary" checked>
+            </div>
+            <div class="shrink1"></div>
+        </div>
+    </div>
+</div>
+<!--地图切换-->
+<div class="tab-img-vec">
+    <ul class="tab-box" id="vecToggle">
+        <li>交<br />通<br />图</li>
+        <li class="tab-active">影<br />像<br />图</li>
+    </ul>
+</div>
+
+
+<div class="layui-form SearchBox" action="">
+    <div class="layui-form-item SearchSelect" style="width: 70px">
+        <select name="layerName" lay-verify="required" lay-filter="layerName" id='layerName'>
+            <option value="河道">河道</option>
+            <option value="湖漾">湖漾</option>
+            <option value="池塘">池塘</option>
+            <option value="水库">水库</option>
+            <option value="山塘">山塘</option>
+            <option value="水文">水文</option>
+            <option value="水质">水质</option>
+        </select>
+    </div>
+    <div class="SearchInput">
+        <input type="text" name="title" autocomplete="off" id='searchInput' placeholder="输入名称、等级、区划" class="layui-input">
+        <button class="layui-btn" id="searchBtnPerson"></button>
+        <span id="close-btn">
+            <img src="/dist/style/res/clear.png">
+        </span>
+
+    </div>
+</div>
+<div class="table-box">
+    <table id="search-result" lay-filter="resultToolLocate">
+        <button class="layui-btn" lay-submit="" lay-filter="exportExcel" id='exportExcel'>导出Excel</button>
+    </table>
+</div>
+<script type="text/html" id="titleTpl">
+    {{#  if(d.district){ }}
+    {{d.district}}
+    {{#  } else { }}
+    {{"未定义"}}
+    {{#  } }}
+</script>
+
+<script type="text/html" id="resultTool">
+    <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="locateSingleResult">定位</a>
+</script>
+
+<img src="/dist/style/res/legend.png" class="layerLegend legend-thumbnail" title='图例'>
+
+<script>
+    layui.use(['admin', 'form', 'leaflet', 'proj4', 'proj4leaflet', 'wmtsTileLayer', 'esri-leaflet', 'mouse-position',
+        'leaflet.draw', 'table', 'toggle', 'leaflet.groupedlayercontrol', 'turf', 'leaflet.markercluster-src'
+    ], function () {
+        var $ = layui.$,
+            admin = layui.admin,
+            form = layui.form,
+            setter = layui.setter,
+            view = layui.view,
+            table = layui.table;
+
+        var crs = new L.Proj.CRS("EPSG:4490", "+proj=longlat +ellps=GRS80 +no_defs", {
+            resolutions: [0.7031250000000002, 0.3515625000000001, 0.1757812500000000,
+                0.0878906250000000, 0.0439453125000000, 0.0219726562500000, 0.0109863281250000,
+                0.0054931640625000, 0.0027465820312500, 0.0013732910156250, 0.0006866455078125,
+                0.0003433227539063, 0.0001716613769531, 0.0000858306884766, 0.0000429153442383,
+                0.0000214576721191, 0.0000107288360596, 0.0000053644180298, 0.0000026822090149,
+                0.0000013411045074
+            ],
+            origin: [-180, 90],
+            bounds: L.bounds([-180, -90], [180, 90])
+        });
+
+        var map = L.map('map', {
+            crs: crs,
+            attributionControl: false,
+            continuousWorld: true,
+            center: {
+                lon: 120.18849,
+                lat: 30.78847
+            },
+            zoom: 10,
+            minZoom: 10,
+            maxZoom: 18,
+            maxBounds: [
+                [30.206, 118.974],
+                [31.275, 120.734]
+            ]
+        });
+        $("#map").height(window.height - 30);
+
+        // 添加国家级天地图服务(EPSG:4490)
+        var vec = new L.TileLayer.WMTS('http://t0.tianditu.com/img_c/wmts', {
+            layer: 'img',
+            style: "default",
+            tilematrixSet: "c",
+            format: "tiles",
+            minZoom: 9,
+            maxZoom: 12
+        });
+        //map.addLayer(vec);
+
+        var analystHightLightGroup = new L.featureGroup();
+        map.addLayer(analystHightLightGroup);
+        // 添加浙江省天地图服务(EPSG:4490)
+        var zjimg = new L.TileLayer.WMTS('http://srv0.zjditu.cn/ZJDOM_2D/wmts', {
+            layer: 'imgmap',
+            style: "default",
+            tilematrixSet: "default028mm",
+            format: "image/png",
+            maxZoom: 16
+        });
+        //map.addLayer(zjimg);
+
+        // 添加湖州市天地图服务(EPSG:4490)
+        var hzimg = new L.TileLayer.WMTS('http://www.hzmaps.com/ogcservice/HUZIMG/service/wmts', {
+            layer: 'HUZIMG',
+            style: "default",
+            tilematrixSet: "TileMatrixSet0",
+            format: "image/png",
+            minZoom: 17,
+            maxZoom: 18
+        });
+        //map.addLayer(hzimg);
+        var imageLayer = L.layerGroup([vec, zjimg, hzimg]);
+        map.addLayer(imageLayer);
+        //添加矢量切片地图
+        var vecNation = new L.TileLayer.WMTS('http://t0.tianditu.com/vec_c/wmts', {
+            layer: 'vec',
+            style: "default",
+            tilematrixSet: "c",
+            format: "tiles",
+            minZoom: 9,
+            maxZoom: 18
+        });
+        var vecZJ = new L.TileLayer.WMTS('http://srv.zjditu.cn/ZJEMAP_2D/wmts', {
+            layer: 'vecZJ',
+            style: "default",
+            tilematrixSet: "c",
+            format: "tiles",
+            minZoom: 9,
+            maxZoom: 18
+        });
+        var vecLayer = L.layerGroup([vecNation, vecZJ]);
+
+        var river_layers = [11, 12, 13, 16];
+        // 水域专题地图服务
+        var town_layer = L.esri.dynamicMapLayer({ //乡镇界线
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [14]
+        }).addTo(map);
+        var district_layer = L.esri.dynamicMapLayer({ //区界线
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [15]
+        }).addTo(map);
+
+        var server = L.esri.dynamicMapLayer({ //保护范围线、管理范围线、河道中间线
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [0, 1, 2],
+            opacity: 0.7
+        });
+        var river_layer = L.esri.dynamicMapLayer({ //河道 面
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [11, 12, 13, 16],
+            opacity: 0.7
+        });
+        var lake_layer = L.esri.dynamicMapLayer({ //湖漾
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [4],
+            opacity: 0.7
+        });
+        var pond_layer = L.esri.dynamicMapLayer({ //池塘
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [6],
+            opacity: 0.7
+        });
+        var reservoir_layer = L.esri.dynamicMapLayer({ //水库
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [5],
+            opacity: 0.7
+        });
+        var pool_layer = L.esri.dynamicMapLayer({ //山塘
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [3],
+            opacity: 0.7
+        });
+        var pump_layer = L.esri.dynamicMapLayer({ //泵站
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [7],
+            opacity: 0.7
+        });
+        var gate_layer = L.esri.dynamicMapLayer({ //水闸
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [9],
+            opacity: 0.7
+        });
+        var polder_layer = L.esri.dynamicMapLayer({ //圩区
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [10],
+            opacity: 0.7
+        });
+        var dike_layer = L.esri.dynamicMapLayer({ //堤防
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [8],
+            opacity: 0.7
+        });
+        var hydrology_layer = L.esri.dynamicMapLayer({ //水文
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [17]
+        });
+        var quality_layer = L.esri.dynamicMapLayer({ //水质
+            url: 'http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer',
+            layers: [18]
+        });
+        let drawLayer = new L.featureGroup();
+
+        form.render();
+        //设置默认空间查询图层
+        var handleLayer = river_layer;
+        var handleLayerIndex;
+        if (localStorage.selectLayer) {
+            $('[name=layerName]').val(localStorage.selectLayer);
+            form.render('select');
+            selectSwitch(localStorage.selectLayer);
+        }
+
+        function selectSwitch(data) {
+            //根据选择的图层，给全局变量handleLayer赋值，就能对指定图层进行相关操作，比如空间查询
+            switch (data) {
+                case "河道":
+                    handleLayer = river_layer;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "湖漾":
+                    handleLayer = lake_layer;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "池塘":
+                    handleLayer = pond_layer;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "水库":
+                    handleLayer = reservoir_layer;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "山塘":
+                    handleLayer = pool_layer;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "泵站":
+                    handleLayer = pump_layer;
+                    handleLayerIndex = 7;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "水闸":
+                    handleLayer = gate_layer;
+                    handleLayerIndex = 9;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "堤防":
+                    handleLayer = dike_layer;
+                    handleLayerIndex = 8;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "圩区":
+                    handleLayer = polder_layer;
+                    handleLayerIndex = 10;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "水文":
+                    handleLayer = hydrology_layer;
+                    handleLayerIndex = 17;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+                case "水质":
+                    handleLayer = quality_layer;
+                    handleLayerIndex = 18;
+                    $('#searchInput').val('');
+                    $('.layui-table-view').css('display', 'none');
+                    $('#exportExcel').css('display', 'none');
+                    break;
+            }
+
+            localStorage.selectLayer = data;
+        }
+
+        //监听lay-filter="layerName" 的select选择
+        form.on('select(layerName)', function (data) {
+            map.closePopup();
+            searchFeatureLayer.clearLayers();
+            selectSwitch(data.value);
+        });
+        //对图层的显示与否进行控制
+        form.on('checkbox', function (ele) {
+            var targetLayerName = ele.elem.title;
+            var flag = !!ele.elem.nextSibling.classList[2];
+            var layer;
+
+            switch (targetLayerName) {
+                case "河道":
+                    layer = river_layer;
+                    break;
+                case "湖漾":
+                    layer = lake_layer;
+                    break;
+                case "池塘":
+                    layer = pond_layer;
+                    break;
+                case "水库":
+                    layer = reservoir_layer;
+                    break;
+                case "山塘":
+                    layer = pool_layer;
+                    break;
+                case "泵站":
+                    layer = waterPumpLayerMarkers; //pump_layer;
+                    break;
+                case "水闸":
+                    layer = waterGateLayerMarkers; //gate_layer;
+                    break;
+                case "堤防":
+                    layer = dike_layer;
+                    break;
+                case "圩区":
+                    layer = polder_layer;
+                    break;
+                case "水文":
+                    layer = waterHydrologyLayerMarkers; //hydrology_layer;
+                    break;
+                case "水质":
+                    layer = waterQualityLayerMarkers; //quality_layer;
+                    break;
+                case "区级界线":
+                    layer = district_layer;
+                    break;
+                case "乡镇界线":
+                    layer = town_layer;
+                    break;
+                case "河道范围线":
+                    layer = server;
+                    break;
+            }
+            updateMap(map, layer, flag);
+
+        });
+
+
+        var tableResult = table.render({
+            elem: '#search-result',
+            url: '/rivers?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[setter.request
+                .tokenName], //模拟接口
+            page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                layout: ['count', 'prev', 'page', 'next'] //自定义分页布局
+                    ,
+                first: false //不显示首页
+                    ,
+                last: false,
+                groups: 1
+
+            },
+            even: false,
+            cellMinWidth: 40,
+            text: {
+                none: '没有返回结果哦，请检查配置文件及数据'
+            },
+            cols: [
+                [{
+                        field: 'district',
+                        title: '行政区',
+                        width: 100,
+                        align: 'center',
+                        templet: '#titleTpl'
+                    },
+                    {
+                        field: 'name',
+                        title: '名称',
+                        width: 120
+                    },
+                    {
+                        title: '操作',
+                        width: 80,
+                        fixed: 'right',
+                        align: 'center',
+                        toolbar: '#resultTool'
+                    }
+                ]
+            ],
+            limit: 18
+        });
+        //定位
+        var identifiedFeatureLayer = new L.featureGroup();
+        identifiedFeatureLayer.addTo(map);
+        table.on('tool(resultToolLocate)', function (obj) {
+            map.closePopup();
+
+            //obj 同上
+            var result = obj.data;
+            var district_code = result.district_code;
+            var name = result.name;
+            var layers = handleLayer.getLayers();
+            var layersCount = layers.length;
+            var callCount = 0;
+            var res = [];
+            var strWhere;
+            for (var i = 0; i < layersCount; i++) {
+                layerId = layers[i];
+                if (handleLayerIndex === 17 || handleLayerIndex === 18) {
+                    strWhere = "name = '" + name + "'";
+                } else {
+                    strWhere = "name = '" + name + "' and code = '" + district_code + "'"
+                }
+                (function (layerId) {
+
+                    handleLayer.query()
+                        .layer(layerId)
+                        .where(strWhere)
+                        .run(function (error, featureCollection, response) {
+
+                            if (featureCollection && featureCollection.features.length > 0) {
+                                //map.closePopup();
+                                var lat, lng;
+                                var geometry = featureCollection.features[0].geometry;
+                                var coordinates = geometry.coordinates;
+                                switch (geometry.type) {
+                                    case "Point":
+                                        lat = coordinates[1];
+                                        lng = coordinates[0];
+                                        break;
+                                    case "Polyline":
+                                        lat = coordinates[0][1];
+                                        lng = coordinates[0][0];
+                                        break;
+                                    case "Polygon":
+                                        lat = coordinates[0][0][1];
+                                        lng = coordinates[0][0][0];
+                                        break;
+                                    case "MultiPolygon":
+                                        lat = coordinates[0][0][0][1];
+                                        lng = coordinates[0][0][0][0];
+                                        break;
+                                }
+                                showPopup(featureCollection.features[0], lat, lng);
+                                var identifiedFeature = L.geoJSON(featureCollection, {
+                                    style: function () {
+                                        return {
+                                            color: '#F00'
+                                        };
+                                    }
+                                }).addTo(identifiedFeatureLayer);
+                                map.fitBounds(identifiedFeature.getBounds().pad(0.8));
+
+
+                            }
+
+                        });
+                })(layerId);
+            }
+
+        });
+
+        function getInsertPoint(borderPointLat, borderPointLng, feature) {
+            var pointArr = [
+                [borderPointLng, borderPointLat + 0.0000000001],
+                [borderPointLng, borderPointLat - 0.00000000001],
+                [borderPointLng + 0.000000001, borderPointLat],
+                [borderPointLng - 0.0000000001, borderPointLat]
+            ];
+
+            for (var i = 0; i < 4; i++) {
+                var ptsWithin = turf.pointsWithinPolygon(turf.point(pointArr[i]), feature);
+                if (ptsWithin.features.length == 1) {
+                    return ptsWithin;
+                }
+            }
+        }
+
+        $(function () {
+            var elClearBtn = document.getElementById('close-btn');
+            elClearBtn.onclick = function () {
+                searchFeatureLayer.clearLayers();
+                $("#searchInput").val('');
+                $('.table-box').css('display', 'none');
+                map.closePopup();
+            }
+
+            $("body").keydown(function (event) {
+                if (event.keyCode == "13") { //keyCode=13是回车键
+                    $("#searchBtnPerson").click();
+                } else if (event.keyCode == "27") {
+                    elClearBtn.click();
+                }
+            });
+        });
+
+        var searchFeatureLayer = new L.featureGroup();
+        map.addLayer(searchFeatureLayer);
+        //点击查询按钮，根据输入的查询条件获取结果数据
+        $('#searchBtnPerson').on('click', function () {
+
+            searchFeatureLayer.clearLayers();
+            map.closePopup();
+            $('#exportExcel').css('display', 'block');
+            var inputCondition = $('#searchInput').val().trim();
+            var searchTarget = $('[name=layerName]').val();
+            var layer; //获取到操作的图层
+            var url; //数据访问接口
+            switch (searchTarget) {
+                case "河道":
+                    url = '/rivers/findByMultiField?' + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[
+                        setter.request.tokenName];
+                    layer = river_layer;
+                    break;
+                case "湖漾":
+                    url = "/lakes/findByMultiField?" + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[
+                        setter.request.tokenName];
+                    layer = lake_layer;
+                    break;
+                case "池塘":
+                    url = "/ponds?" + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                        setter.request.tokenName];
+                    layer = pond_layer;
+
+                    break;
+                case "水库":
+                    url = "/reservoirs/findByMultiField?" + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[
+                        setter.request.tokenName];
+                    layer = reservoir_layer;
+                    break;
+                case "山塘":
+                    url = "/pools/findByMultiField?" + setter.request.tokenName + '=' + layui.data(
+                        setter.tableName)[
+                        setter.request.tokenName];
+                    layer = pool_layer;
+                    break;
+                case "泵站":
+                    layer = pump_layer;
+                    break;
+                case "水闸":
+                    layer = gate_layer;
+                    break;
+                case "堤防":
+                    layer = dike_layer;
+                    break;
+                case "圩区":
+                    layer = polder_layer;
+                    break;
+                case "水文":
+                    url = "/hydrology?" + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                        setter.request.tokenName];
+                    layer = hydrology_layer;
+                    break;
+                case "水质":
+                    url = "/quality?" + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                        setter.request.tokenName];
+                    layer = quality_layer;
+                    break;
+            }
+            debugger
+            var layers = layer.getLayers();
+            var layersCount = layers.length;
+            var callCount = 0;
+            var res = [];
+            var strWhere;
+            for (var i = 0; i < layersCount; i++) {
+                layerId = layers[i];
+                if (layerId === 17 || layerId === 18) {
+                    //水文水质
+                    strWhere = "name like '%" + layerId + "%' or type like '%" + inputCondition +"%'";
+                }else if(layerId === 3 || layerId === 5){
+                    //水库 山塘  （name district  type）
+                    strWhere = "name like '%" + inputCondition + "%' or district like '%" + inputCondition +"%' or type like '"+ inputCondition +"%'";
+                }else if(layerId === 11 || layerId === 12||layerId === 13 || layerId === 16){
+                    //河流  （name district layer）
+                    strWhere = "name like '%" + inputCondition + "%' or district like '%" + inputCondition +"%' or layer like '"+ inputCondition +"%'";
+                } else {
+                    strWhere = "name like '%" + inputCondition + "%' or district like '%" + inputCondition +"%'";
+                }
+                (function (layerId) {
+                    switch (layerId) {
+                        case 18:
+                            $.ajax({
+                                url: '/quality/?' + setter.request.tokenName + '=' + layui.data(
+                                    setter.tableName)[
+                                    setter.request.tokenName],
+                                type: 'GET',
+                                data: {
+                                    'limit': '100',
+                                    'name': inputCondition
+                                },
+                                success: function (res) {
+                                    res.data.forEach(function (item) {
+                                        var lat = item.latitude;
+                                        var lng = item.longitude;
+                                        var tooltip = "";
+                                        tooltip +=
+                                            "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                                        tooltip +=
+                                            "<div name='marker' class='map_mark'>";
+                                        tooltip +=
+                                            "<span class='map_num'>质</span>";
+                                        tooltip +=
+                                            "<div class='map_mark_inner'>";
+                                        tooltip +=
+                                            "<span class='map_mark_name'>" +
+                                            item.name + "</span>";
+                                        tooltip += " </div>";
+                                        tooltip += "</td></tr></table>";
+                                        var pointStyle = L.divIcon({
+                                            iconAnchor: [8, 8],
+                                            className: 'leaflet-divlabel',
+                                            html: tooltip
+                                        });
+                                        item.icon = pointStyle;
+                                        var tempMarker = L.marker([lat, lng],
+                                            item).addTo(searchFeatureLayer);
+                                        tempMarker.on('click', function (ele) {
+                                            var popup =
+                                                "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                                            popup +=
+                                                "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                                                item.name +
+                                                "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                                                item.type +
+                                                "</span></td></tr>";
+                                            popup +=
+                                                "<tr><td>水质目标 ：</td><td><span class='orange'>" +
+                                                item.target +
+                                                " 类</span></td><td>建站年月 ：</td><td><span class='orange'>" +
+                                                item.build_year +
+                                                "</span></td></tr>";
+                                            popup +=
+                                                "<tr><td width='20%'>水功能区 ：</td><td colspan='3'><span class='orange'>" +
+                                                item.zone +
+                                                "</span></td></tr>";
+                                            popup += "</tbody></table>";
+                                            L.popup({
+                                                    minWidth: 380
+                                                }).setLatLng([lat, lng])
+                                                .setContent(popup).openOn(
+                                                    map);
+                                        });
+                                    })
+                                }
+                            });
+                            break;
+                        case 17:
+                            $.ajax({
+                                url: '/hydrology/?' + setter.request.tokenName + '=' +
+                                    layui.data(setter.tableName)[
+                                        setter.request.tokenName],
+                                type: 'GET',
+                                data: {
+                                    'limit': '100',
+                                    'name': inputCondition
+                                },
+                                success: function (res) {
+                                    res.data.forEach(function (item) {
+                                        var lat = item.latitude;
+                                        var lng = item.longitude;
+                                        var tooltip = "";
+                                        tooltip +=
+                                            "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                                        tooltip +=
+                                            "<div name='marker' class='map_mark'>";
+                                        tooltip +=
+                                            "<span class='map_num'>文</span>";
+                                        tooltip +=
+                                            "<div class='map_mark_inner'>";
+                                        tooltip +=
+                                            "<span class='map_mark_name'>" +
+                                            item.name + "</span>";
+                                        tooltip += " </div>";
+                                        tooltip += "</td></tr></table>";
+                                        var pointStyle = L.divIcon({
+                                            iconAnchor: [8, 8],
+                                            className: 'leaflet-divlabel',
+                                            html: tooltip
+                                        });
+                                        item.icon = pointStyle;
+                                        var tempMarker = L.marker([lat, lng],
+                                            item).addTo(searchFeatureLayer);
+                                        tempMarker.on('click', function (ele) {
+                                            var popup =
+                                                "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                                            popup +=
+                                                "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                                                item.name +
+                                                "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                                                item.type +
+                                                "</span></td></tr>";
+                                            popup +=
+                                                "<tr><td>观测项目 ：</td><td colspan='3'><span class='orange'>" +
+                                                item.target +
+                                                " </span></td></tr>";
+                                            popup += "</tbody></table>";
+                                            L.popup({
+                                                    minWidth: 380
+                                                }).setLatLng([lat, lng])
+                                                .setContent(popup).openOn(
+                                                    map);
+                                        });
+
+                                    })
+                                }
+                            });
+                            break;
+                        default:
+                            layer.query()
+                                .layer(layerId)
+                                .where(strWhere)
+                                .run(function (error, featureCollection, response) {
+                                    callCount++;
+                                    if (featureCollection && featureCollection.features.length >
+                                        0) {
+                                        console.log(featureCollection);
+                                        L.geoJSON(featureCollection, {
+                                            style: function () {
+                                                return {
+                                                    color: '#00F'
+                                                };
+                                            }
+                                        }).addTo(searchFeatureLayer);
+
+                                        if (callCount == layersCount) {
+                                            map.fitBounds(searchFeatureLayer.getBounds().pad(
+                                                0.2));
+                                        }
+                                    }
+
+
+                                });
+                            break;
+                    }
+
+                })(layerId);
+            }
+
+            $('.table-box').css('display', 'block');
+            tableResult.reload({
+                url: url,
+                where: {
+                    name: inputCondition,
+                },
+                page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                    layout: ['count', 'prev', 'page', 'next'] //自定义分页布局
+                        ,
+                    first: false //不显示首页
+                        ,
+                    last: false,
+                    groups: 1
+
+                },
+            });
+            form.on('submit(exportExcel)', function () {
+                $.ajax({
+                    url: url,
+                    data: {
+                        'page': '1',
+                        'limit': '100000000000',
+                        name: inputCondition
+                    },
+                    success: function (data) {
+                        console.log(data)
+                        switch (searchTarget) {
+                            case "河道":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.district,
+                                        element.name, element.level_name,
+                                        element.length, element.area_now,
+                                        element.storage_now,
+                                        element.start_location,
+                                        element.ending_location,
+                                        element.crosses
+                                    ]);
+                                });
+                                table.exportFile(['行政区', '河道名称', '等级',
+                                    '长度(m)', '面积(m2)', '容积(万m3)', '起点',
+                                    '终点', '流经区域'
+                                ], arr, 'xls');
+                                break;
+                            case "湖漾":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.district,
+                                        element.name, element.area,
+                                        element.storage, element.remark
+                                    ]);
+                                });
+                                table.exportFile(['行政区', '名称', '面积(m2)',
+                                    '容积(万m3)', '备注'
+                                ], arr, 'xls');
+                                break;
+                            case "池塘":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.district,
+                                        element.name, element.area,
+                                        element.storage, element.remark
+                                    ]);
+                                });
+                                table.exportFile(['行政区', '名称', '面积(m2)',
+                                    '容积(万m3)', '备注'
+                                ], arr, 'xls');
+                                break;
+                            case "水库":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.district, element.name,
+                                        element.type, element.admin_village,
+                                        element.nature_village,
+                                        element.area, element.storage,
+                                        element.catch_area, element
+                                        .spillway, element.build_year
+                                    ])
+                                });
+                                table.exportFile(['行政区', '名称', '等级', '所在行政村',
+                                    '所在自然村', '面积(m2)', '总库容(万m3)',
+                                    '集雨面积(km2)',
+                                    '有无溢洪道',
+                                    '建成年份'
+                                ], arr, 'xls');
+                                break;
+                            case "山塘":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.district, element.name,
+                                        element.type,
+                                        element.admin_village,
+                                        element.nature_village,
+                                        element.area,
+                                        element.storage, element.catch_area,
+                                        element.dam_height, element
+                                        .dam_length,
+                                        element.house, element.people,
+                                        element.road,
+                                        element.spillway, element.build_year,
+                                        element.standard_year,
+                                        element.standard
+                                    ])
+                                });
+                                table.exportFile(['行政区', '名称', '等级', '所在行政村',
+                                    '所在自然村', '面积(m2)',
+                                    '总库容(万m3)',
+                                    '集雨面积(km2)', '坝高(m)', '坝长(m)',
+                                    '下游直接影响房屋(间)',
+                                    '下游直接影响人口(人)', '下游影响干道',
+                                    '有无溢洪道', '建成年份', '整治年份', '整治标准'
+                                ], arr, 'xls');
+                                break;
+                            case "水文":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.name, element.type,
+                                        element.target
+                                    ])
+                                });
+                                table.exportFile(['测站名称', '测站类别', '观测项目'], arr,
+                                    'xls');
+                                break;
+                            case "水质":
+                                var arr = [];
+                                data.data.forEach(element => {
+                                    arr.push([element.name, element.type,
+                                        element.type, element.zone,
+                                        element.estimate_length,
+                                        element.estimate_area,
+                                        element.target
+                                    ])
+                                });
+                                table.exportFile(['测站名称', '等级', '所属水功能区', '建站年月',
+                                    '评价河长(m)', '评价面积(km2)', '水质目标'
+                                ], arr, 'xls');
+                                break;
+                        }
+
+                    }
+                });
+                return false;
+            });
+        });
+        var drawControl = null;
+        initMapControl();
+
+        function initMapControl() {
+            var mousrPosition = L.control.mousePosition().addTo(map);
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+            if (!drawControl) {
+                drawControl = new L.Control.Draw({
+                    position: 'topleft',
+                    draw: {
+                        polyline: false,
+                        polygon: {
+                            allowIntersection: true,
+                            showArea: false,
+                            drawError: {
+                                color: '#b00b00',
+                                timeout: 1000
+                            },
+                            shapeOptions: {
+                                color: '#bada55'
+                            }
+                        },
+                        circle: false,
+                        marker: false
+                    },
+                    edit: {
+                        featureGroup: drawnItems,
+                        edit: false,
+                        remove: false
+                    }
+                });
+            }
+            map.addControl(drawControl);
+
+            map.on('draw:created', function (e) {
+                //将查询范围和范围形状保存在全局变量里面，备用（空间查询）
+                ;
+                shapeType = e.layerType;
+                drawLayer = e.layer;
+                drawnItems.addLayer(drawLayer);
+                query(drawLayer);
+            });
+
+            map.on('draw:drawstart', function (e) {
+                drawnItems.clearLayers();
+                layer.closeAll();
+            });
+
+            map.on('draw:deletestart', function (e) {
+                drawnItems.clearLayers();
+                $(".leaflet-draw-actions").css('display', 'none');
+            });
+
+
+            //添加一个自定义控件用于显隐全景
+            new L.Control.overallToggle({
+                position: 'topleft'
+            }).addTo(map);
+
+            new L.Control.monitorToggle({
+                position: 'topleft'
+            }).addTo(map);
+        }
+
+        function query(inputGeo) {
+            //以下turf使用查询范围构造feature
+
+            var tempPolygon = [];
+            res = [];
+            var callCount = 0;
+            var featuresLayers = handleLayer.getLayers();
+            var count = featuresLayers.length;
+            for (var i = 0; i < count; i++) {
+                layerId = featuresLayers[i];
+                (function (layerId) {
+                    handleLayer.query()
+                        .layer(layerId)
+                        .within(inputGeo)
+                        .intersects(inputGeo)
+                        .run(function (error, featureCollection, response) {
+                            callCount++;
+                            featureCollection.features.forEach(function (feature) {
+
+                                feature.properties.layerId = layerId;
+                                res.push(feature.properties);
+                            });
+                            if (callCount === count) {
+                                spatialQueryList(res);
+                            }
+                        });
+                })(layerId);
+
+            }
+        }
+
+        //处理空间查询得到的结果
+        function spatialQueryList(featureArray) {
+            console.log(featureArray);
+            var html = ""; //模板html
+            var url = layui.setter.base + 'views/senior/water/spatialQueryResult.html'; //'./assets/view/OverBurdenDepth.html';
+            /*请求渲染模板，弹出层显示*/
+            var windowHeight = $('.layui-layout > .layui-side-menu').outerHeight();
+            var offsetT = windowHeight - 678;
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'html',
+                async: false,
+                success: function (result) {
+                    /*显示空间查询结果*/
+                    html = result;
+                },
+                error: function (err) {
+
+                    alert('模板请求失败' + err);
+                }
+            });
+            layer.open({
+                type: 1,
+                title: '空间查询结果',
+                content: html,
+                shade: false,
+                id: 'spatialQueryResult1',
+                area: ["350px", "555px"],
+                offset: [offsetT, '273px'],
+                success: function (layero, index) {
+                    renderTable(featureArray);
+                },
+                end: function () {
+                    if (identifiedFeature) {
+                        identifiedFeature.clearLayers();
+                    }
+                    drawnItems.clearLayers();
+                }
+            });
+        }
+
+
+        /*表格显示*/
+        function renderTable(tableData) {
+            var table = layui.table;
+            /*渲染表格*/
+            table.render({
+                elem: '#analysisResult',
+                height: '472px',
+                data: tableData,
+                page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                    layout: ['count', 'prev', 'page', 'next'] //自定义分页布局
+                        ,
+                    first: false //不显示首页
+                        ,
+                    last: false,
+                    groups: 1
+
+                },
+                cellMinWidth: 40,
+                text: {
+                    none: '没有返回结果哦，请检查配置文件及数据'
+                },
+                cols: [
+                    [{
+                            field: 'name',
+                            width: 140,
+                            title: '名称',
+                            align: 'center'
+                        },
+                        {
+                            field: 'district',
+                            width: 110,
+                            title: '行政区'
+                        },
+                        {
+                            title: '操作',
+                            minWidth: 80,
+                            fixed: 'right',
+                            align: 'center',
+                            toolbar: '#tableTool'
+                        }
+                    ]
+                ],
+                even: false,
+            });
+            $('.analysisTool .layui-btn-xs').css('font-size', '10px'); //表格工具栏按钮，定位- 详情
+            $('.analysisTool .layui-btn').css('margin-left', '0');
+            /*绑定事件*/
+            table.on('tool(analysis)', function (obj) {
+
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                //定位
+                if (layEvent === 'locate') {
+                    /*定位*/
+                    zoomRow(data);
+                }
+            });
+            //导出空间查询结果excel，最新版的table支持该方法
+            form.on('submit(exportExcel)', function () {
+                var arr = [];
+                tableData.forEach(element => {
+                    arr.push([element.FID, element.name, element.district])
+                });
+                table.exportFile(['FID', '名字', '行政区划'], arr, 'xls');
+                return false;
+            });
+        }
+
+        function showPopup(feature, lat, lng) {
+            if (handleLayer == river_layer) {
+                $.ajax({
+                    url: '/river/district/name',
+                    data: {
+                        name: feature.properties['name'],
+                        district_code: feature.properties['code']
+                    },
+                    async: false,
+                    success: function (res) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                        popup +=
+                            "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.name != null ? res.data.name : '') +
+                            "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.district != null ? res.data.district : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>长度 ：</td><td><span class='orange'>" +
+                            (res.data.length != null ? res.data.length : '') +
+                            " m</span></td><td>面积 ：</td><td><span class='orange'>" +
+                            (res.data.area_now != null ? res.data.area_now : '') +
+                            " m<sup>2</sup></span></td></tr>";
+                        popup +=
+                            "<tr><td>容积 ：</td><td><span class='orange'>" +
+                            (res.data.storage_now != null ? res.data.storage_now : '') +
+                            " 万m<sup>3</sup></span></td><td>河道等级 ：</td><td><span class='orange'>" +
+                            (res.data.level_name != null ? res.data.level_name : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>起点位置 ：</td><td><span class='orange'>" +
+                            (res.data.start_location != null ? res.data.start_location : '') +
+                            "</span></td><td>终点位置 ：</td><td width='76%'><span class='orange'>" +
+                            (res.data.ending_location != null ? res.data.ending_location : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>流经区域 ：</td><td colspan='3'><span class='orange'>" +
+                            (res.data.crosses != null ? res.data.crosses : '') +
+                            "</span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng([lat, lng])
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+            } else if (handleLayer == lake_layer) {
+
+                admin.req({
+                    url: '/lake/district/name',
+                    data: {
+                        name: feature.properties['name'],
+                        district_code: feature.properties['code']
+                    },
+                    done: function (res) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.name != null ? res.data.name : '') +
+                            "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.district != null ? res.data.district : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>面积 ：</td><td><span class='orange'>" +
+                            (res.data.area != null ? res.data.area : '') +
+                            " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                            (res.data.storage != null ? res.data.storage : '') +
+                            " 万m<sup>3</sup></span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng([lat, lng])
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+
+            } else if (handleLayer == reservoir_layer) {
+                admin.req({
+                    url: '/reservoir/district/name',
+                    data: {
+                        name: feature.properties['name'],
+                        district_code: feature.properties['code']
+                    },
+                    done: function (res) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                        popup +=
+                            "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.name != null ? res.data.name : '') +
+                            "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.district != null ? res.data.district : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>面积 ：</td><td><span class='orange'>" +
+                            (res.data.area != null ? res.data.area : '') +
+                            " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                            (res.data.storage != null ? res.data.storage : '') +
+                            " 万m<sup>3</sup></span></td></tr>";
+                        popup +=
+                            "<tr><td>集雨面积 ：</td><td><span class='orange'>" +
+                            (res.data.catch_area != null ? res.data.catch_area : '') +
+                            " km<sup>2</sup></span></td><td>等级 ：</td><td><span class='orange'>" +
+                            (res.data.type != null ? res.data.type : '') + "</span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng([lat, lng])
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+
+            } else if (handleLayer == pool_layer) {
+
+                admin.req({
+                    url: '/pool/district/name',
+                    data: {
+                        name: feature.properties['name'],
+                        district_code: feature.properties['code']
+                    },
+                    done: function (res) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                        popup +=
+                            "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.name != null ? res.data.name : '') +
+                            "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                            (res.data.district != null ? res.data.district : '') +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>面积 ：</td><td><span class='orange'>" +
+                            (res.data.area != null ? res.data.area : '') +
+                            " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                            (res.data.storage != null ? res.data.storage : '') +
+                            " 万m<sup>3</sup></span></td></tr>";
+                        popup +=
+                            "<tr><td>集雨面积 ：</td><td><span class='orange'>" +
+                            (res.data.catch_area != null ? res.data.catch_area : '') +
+                            " km<sup>2</sup></span></td><td>等级 ：</td><td><span class='orange'>" +
+                            (res.data.type != null ? res.data.type : '') + "</span></td></tr>";
+                        popup +=
+                            "<tr><td>主坝高 ：</td><td><span class='orange'>" +
+                            (res.data.dam_height != null ? res.data.dam_height : '') +
+                            " m</span></td><td>主坝长 ：</td><td><span class='orange'>" +
+                            (res.data.dam_length != null ? res.data.dam_length : '') +
+                            " m</span></td></tr>";
+                        popup +=
+                            "<tr><td>建成年份 ：</td><td><span class='orange'>" +
+                            (res.data.build_year != null ? res.data.build_year : '') +
+                            " </span></td><td>防洪标准 ：</td><td><span class='orange'>" +
+                            (res.data.standard != null ? res.data.standard : '') +
+                            "</span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng([lat, lng])
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+
+            } else if (handleLayer == hydrology_layer) {
+                var popup =
+                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                popup += "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" + feature.properties[
+                        'name'] +
+                    "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" + feature.properties[
+                        'type'] + "</span></td></tr>";
+                popup += "<tr><td>观测项目 ：</td><td colspan='3'><span class='orange'>" + feature.properties[
+                    'target'] + " </span></td></tr>";
+                popup += "</tbody></table>";
+                L.popup({
+                        minWidth: 380
+                    })
+                    .setLatLng([lat, lng])
+                    .setContent(popup)
+                    .openOn(map);
+
+            } else if (handleLayer == quality_layer) {
+                var popup =
+                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                popup += "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" + feature.properties[
+                        'name'] +
+                    "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" + feature.properties[
+                        'type'] + "</span></td></tr>";
+                popup += "<tr><td>水质目标 ：</td><td><span class='orange'>" + feature.properties[
+                        'target'] +
+                    " 类</span></td><td>建站年月 ：</td><td><span class='orange'>" + feature.properties[
+                        'build_year'] + "</span></td></tr>";
+                popup += "<tr><td width='20%'>水功能区 ：</td><td colspan='3'><span class='orange'>" +
+                    feature.properties['zone'] + " m<sup>2</sup></span></td></tr>";
+                popup += "</tbody></table>";
+                L.popup({
+                        minWidth: 380
+                    })
+                    .setLatLng([lat, lng])
+                    .setContent(popup)
+                    .openOn(map);
+
+            } else {
+                var popup =
+                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                for (var key in featureCollection.features[0].properties) {
+                    if (key == 'name')
+                        popup += "<tr><td width='20%'>名称 ：</td><td width='78%'><span class='orange'>" + feature
+                        .properties[key] + "</span></td></tr>";
+                    else if (key == 'district')
+                        popup += "<tr><td width='20%'>行政区 ：</td><td width='78%'><span class='orange'>" +
+                        feature.properties[key] + "</span></td></tr>";
+                    else
+                        continue;
+                }
+                popup += "</tbody></table>";
+
+                L.popup()
+                    .setLatLng([lat, lng])
+                    .setContent(popup)
+                    .openOn(map);
+            }
+        }
+
+        function zoomRow(data) {
+            debugger
+            map.closePopup();
+            var FID = data.FID;
+            var layerId = data.layerId;
+            L.esri.query({
+                url: "http://122.225.120.146:6688/arcgis/rest/services/huzhou/labelServer/MapServer/" +
+                    layerId
+            }).where("FID=" + FID).run(function (error, featureCollection) {
+                if (identifiedFeature) {
+                    map.removeLayer(identifiedFeature);
+                }
+                if (featureCollection && featureCollection.features.length > 0) {
+                    identifiedFeature = L.geoJSON(featureCollection, {
+                        style: function () {
+                            return {
+                                color: '#F00'
+                            };
+                        }
+                    }).addTo(map);
+                    var lat, lng;
+                    var geometry = identifiedFeature.toGeoJSON().features[0].geometry;
+                    var coordinates = geometry.coordinates;
+                    switch (geometry.type) {
+                        case "Point":
+                            lat = coordinates[1];
+                            lng = coordinates[0];
+                            break;
+                        case "Polyline":
+                            lat = coordinates[0][1];
+                            lng = coordinates[0][0];
+                            break;
+                        case "Polygon":
+                            lat = coordinates[0][0][1];
+                            lng = coordinates[0][0][0];
+                            break;
+                        case "MultiPolygon":
+                            lat = coordinates[0][0][0][1];
+                            lng = coordinates[0][0][0][0];
+                            break;
+                    }
+
+                    showPopup(featureCollection.features[0], lat, lng);
+                    map.fitBounds(identifiedFeature.getBounds().pad(0.2))
+                }
+            });
+        }
+
+        function updateMap(map, layer, state) {
+            if (state) {
+                map.addLayer(layer);
+            } else {
+                map.removeLayer(layer);
+            }
+        }
+
+        var identifiedFeature;
+        var circle;
+        var identifiedFeatureStyle = {
+            style: function () {
+                return {
+                    color: '#F00'
+                }
+            }
+        };
+        map.on('popupclose', function () {
+            if (identifiedFeature) {
+                map.removeLayer(identifiedFeature);
+            }
+            identifiedFeatureLayer.clearLayers();
+        });
+        map.on('click', function (e) {
+            if (identifiedFeature) {
+                map.removeLayer(identifiedFeature);
+            }
+            identifiedFeatureLayer.clearLayers();
+            if (e.triggerType == 'CODE') {
+                //circle = L.point(e.latlng.lat, e.latlng.lng).addTo(map);
+                bound = L.point(e.latlng.lat, e.latlng.lng);
+            } else {
+                circle = L.circle([e.latlng.lat, e.latlng.lng], {
+                    radius: 1,
+                    opacity: 0
+                }).addTo(map);
+                bound = circle.getBounds();
+            }
+
+
+
+            if (handleLayer == river_layer) {
+                river_layers.forEach(function (item) {
+                    river_layer.query().layer(item).intersects(bound).run(function (error,
+                        featureCollection) {
+                        map.removeLayer(circle);
+                        if (featureCollection.features.length > 0) {
+                            if (identifiedFeature) {
+                                map.removeLayer(identifiedFeature);
+                            }
+                            identifiedFeatureLayer.clearLayers();
+                            identifiedFeature = L.geoJson(featureCollection.features[0],
+                                identifiedFeatureStyle).addTo(map);
+
+                            admin.req({
+                                url: '/river/district/name',
+                                data: {
+                                    name: featureCollection.features[0].properties[
+                                        'name'],
+                                    district_code: featureCollection.features[0]
+                                        .properties['code']
+                                },
+                                done: function (res) {
+                                    var popup =
+                                        "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                                    popup +=
+                                        "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                                        (res.data.name != null ? res.data.name :
+                                            '') +
+                                        "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                                        (res.data.district != null ? res.data
+                                            .district : '') +
+                                        "</span></td></tr>";
+                                    popup +=
+                                        "<tr><td>长度 ：</td><td><span class='orange'>" +
+                                        (res.data.length != null ? res.data
+                                            .length : '') +
+                                        " m</span></td><td>面积 ：</td><td><span class='orange'>" +
+                                        (res.data.area_now != null ? res.data
+                                            .area_now : '') +
+                                        " m<sup>2</sup></span></td></tr>";
+                                    popup +=
+                                        "<tr><td>容积 ：</td><td><span class='orange'>" +
+                                        (res.data.storage_now != null ? res
+                                            .data.storage_now : '') +
+                                        " 万m<sup>3</sup></span></td><td>河道等级 ：</td><td><span class='orange'>" +
+                                        (res.data.level_name != null ? res.data
+                                            .level_name : '') +
+                                        "</span></td></tr>";
+                                    popup +=
+                                        "<tr><td>起点位置 ：</td><td><span class='orange'>" +
+                                        (res.data.start_location != null ?
+                                            res.data.start_location : '') +
+                                        "</span></td><td>终点位置 ：</td><td width='76%'><span class='orange'>" +
+                                        (res.data.ending_location != null ?
+                                            res.data.ending_location : '') +
+                                        "</span></td></tr>";
+                                    popup +=
+                                        "<tr><td>流经区域 ：</td><td colspan='3'><span class='orange'>" +
+                                        (res.data.crosses != null ? res.data
+                                            .crosses : '') +
+                                        "</span></td></tr>";
+                                    popup += "</tbody></table>";
+                                    L.popup({
+                                            minWidth: 380
+                                        })
+                                        .setLatLng(e.latlng)
+                                        .setContent(popup)
+                                        .openOn(map);
+                                }
+                            });
+                        }
+                    });
+                });
+            } else if (handleLayer == lake_layer) {
+
+                lake_layer.query().layer(4).intersects(bound).run(function (error, featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+                        identifiedFeature = L.geoJson(featureCollection.features[0],
+                            identifiedFeatureStyle).addTo(map);
+
+                        admin.req({
+                            url: '/lake/district/name',
+                            data: {
+                                name: featureCollection.features[0].properties['name'],
+                                district_code: featureCollection.features[0].properties[
+                                    'code']
+                            },
+                            done: function (res) {
+                                var popup =
+                                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                                popup +=
+                                    "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.name != null ? res.data.name : '') +
+                                    "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.district != null ? res.data.district :
+                                        '') + "</span></td></tr>";
+                                popup +=
+                                    "<tr><td>面积 ：</td><td><span class='orange'>" +
+                                    (res.data.area != null ? res.data.area : '') +
+                                    " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                                    (res.data.storage != null ? res.data.storage :
+                                        '') + " 万m<sup>3</sup></span></td></tr>";
+                                popup += "</tbody></table>";
+                                L.popup({
+                                        minWidth: 380
+                                    })
+                                    .setLatLng(e.latlng)
+                                    .setContent(popup)
+                                    .openOn(map);
+                            }
+                        });
+                    }
+                });
+
+            } else if (handleLayer == reservoir_layer) {
+                reservoir_layer.query().layer(5).intersects(bound).run(function (error,
+                    featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+                        identifiedFeature = L.geoJson(featureCollection.features[0],
+                            identifiedFeatureStyle).addTo(map);
+
+                        admin.req({
+                            url: '/reservoir/district/name',
+                            data: {
+                                name: featureCollection.features[0].properties['name'],
+                                district_code: featureCollection.features[0].properties[
+                                    'code']
+                            },
+                            done: function (res) {
+                                var popup =
+                                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                                popup +=
+                                    "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.name != null ? res.data.name : '') +
+                                    "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.district != null ? res.data.district :
+                                        '') + "</span></td></tr>";
+                                popup +=
+                                    "<tr><td>面积 ：</td><td><span class='orange'>" +
+                                    (res.data.area != null ? res.data.area : '') +
+                                    " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                                    (res.data.storage != null ? res.data.storage :
+                                        '') + " 万m<sup>3</sup></span></td></tr>";
+                                popup +=
+                                    "<tr><td>集雨面积 ：</td><td><span class='orange'>" +
+                                    (res.data.catch_area != null ? res.data.catch_area :
+                                        '') +
+                                    " km<sup>2</sup></span></td><td>等级 ：</td><td><span class='orange'>" +
+                                    (res.data.type != null ? res.data.type : '') +
+                                    "</span></td></tr>";
+                                popup += "</tbody></table>";
+                                L.popup({
+                                        minWidth: 380
+                                    })
+                                    .setLatLng(e.latlng)
+                                    .setContent(popup)
+                                    .openOn(map);
+                            }
+                        });
+                    }
+                });
+
+            } else if (handleLayer == pool_layer) {
+
+                pool_layer.query().layer(3).intersects(bound).run(function (error, featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+                        identifiedFeature = L.geoJson(featureCollection.features[0],
+                            identifiedFeatureStyle).addTo(map);
+
+                        admin.req({
+                            url: '/pool/district/name',
+                            data: {
+                                name: featureCollection.features[0].properties['name'],
+                                district_code: featureCollection.features[0].properties[
+                                    'code']
+                            },
+                            done: function (res) {
+                                var popup =
+                                    "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                                popup +=
+                                    "<tr><td width='20%'>名称 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.name != null ? res.data.name : '') +
+                                    "</span></td><td width='20%'>行政区 ：</td><td width='28%'><span class='orange'>" +
+                                    (res.data.district != null ? res.data.district :
+                                        '') + "</span></td></tr>";
+                                popup +=
+                                    "<tr><td>面积 ：</td><td><span class='orange'>" +
+                                    (res.data.area != null ? res.data.area : '') +
+                                    " m<sup>2</sup></span></td><td>库容 ：</td><td><span class='orange'>" +
+                                    (res.data.storage != null ? res.data.storage :
+                                        '') + " 万m<sup>3</sup></span></td></tr>";
+                                popup +=
+                                    "<tr><td>集雨面积 ：</td><td><span class='orange'>" +
+                                    (res.data.catch_area != null ? res.data.catch_area : '') +
+                                    " km<sup>2</sup></span></td><td>等级 ：</td><td><span class='orange'>" +
+                                    (res.data.type != null ? res.data.type : '') + "</span></td></tr>";
+                                popup +=
+                                    "<tr><td>主坝高 ：</td><td><span class='orange'>" +
+                                    (res.data.dam_height != null ? res.data.dam_height :
+                                        '') +
+                                    " m</span></td><td>主坝长 ：</td><td><span class='orange'>" +
+                                    (res.data.dam_length != null ? res.data.dam_length :
+                                        '') + " m</span></td></tr>";
+                                popup +=
+                                    "<tr><td>建成年份 ：</td><td><span class='orange'>" +
+                                    (res.data.build_year != null ? res.data.build_year :
+                                        '') +
+                                    " </span></td><td>防洪标准 ：</td><td><span class='orange'>" +
+                                    (res.data.standard != null ? res.data.standard :
+                                        '') + "</span></td></tr>";
+                                popup += "</tbody></table>";
+                                L.popup({
+                                        minWidth: 380
+                                    })
+                                    .setLatLng(e.latlng)
+                                    .setContent(popup)
+                                    .openOn(map);
+                            }
+                        });
+                    }
+                });
+
+            } else if (handleLayer == hydrology_layer) {
+                var circle = L.circle([e.latlng.lat, e.latlng.lng], {
+                    radius: 50,
+                    opacity: 0
+                }).addTo(map);
+                var bound = circle.getBounds();
+                hydrology_layer.query().layer(17).intersects(bound).run(function (error,
+                    featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                            featureCollection.features[0].properties['name'] +
+                            "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                            featureCollection.features[0].properties['type'] +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>观测项目 ：</td><td colspan='3'><span class='orange'>" +
+                            featureCollection.features[0].properties['target'] +
+                            " </span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng(e.latlng)
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+
+            } else if (handleLayer == quality_layer) {
+                var circle = L.circle([e.latlng.lat, e.latlng.lng], {
+                    radius: 50,
+                    opacity: 0
+                }).addTo(map);
+                var bound = circle.getBounds();
+                quality_layer.query().layer(18).intersects(bound).run(function (error,
+                    featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                            featureCollection.features[0].properties['name'] +
+                            "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                            featureCollection.features[0].properties['type'] +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>水质目标 ：</td><td><span class='orange'>" +
+                            featureCollection.features[0].properties['target'] +
+                            " 类</span></td><td>建站年月 ：</td><td><span class='orange'>" +
+                            featureCollection.features[0].properties['build_year'] +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td width='20%'>水功能区 ：</td><td colspan='3'><span class='orange'>" +
+                            featureCollection.features[0].properties['zone'] +
+                            " m<sup>2</sup></span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                                minWidth: 380
+                            })
+                            .setLatLng(e.latlng)
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+
+            } else {
+                handleLayer.query().layer(handleLayerIndex).intersects(bound).run(function (error,
+                    featureCollection) {
+                    map.removeLayer(circle);
+                    if (featureCollection.features.length > 0) {
+                        identifiedFeature = L.geoJson(featureCollection.features[0],
+                            identifiedFeatureStyle).addTo(map);
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+
+                        for (var key in featureCollection.features[0].properties) {
+                            if (key == 'name')
+                                popup +=
+                                "<tr><td width='20%'>名称 ：</td><td width='78%'><span class='orange'>" +
+                                featureCollection.features[0].properties[key] +
+                                "</span></td></tr>";
+                            else if (key == 'district')
+                                popup +=
+                                "<tr><td width='20%'>行政区 ：</td><td width='78%'><span class='orange'>" +
+                                featureCollection.features[0].properties[key] +
+                                "</span></td></tr>";
+                            else
+                                continue;
+                        }
+                        popup += "</tbody></table>";
+
+                        L.popup()
+                            .setLatLng(e.latlng)
+                            .setContent(popup)
+                            .openOn(map);
+                    }
+                });
+            }
+        });
+
+
+        $(".layerLegend").click(function () {
+            var $this = $(this);
+            if ($this.hasClass('legend-thumbnail')) {
+                $this.removeClass('legend-thumbnail').addClass('legend-large');
+            } else {
+                $this.removeClass('legend-large').addClass('legend-thumbnail');
+            }
+        });
+        //影像和矢量地图切换
+        $('#vecToggle li').click(function (e) {;
+            let el = e.target;
+            $(this).siblings().removeClass('tab-active');
+            $(this).addClass('tab-active');
+            switch (el.innerHTML) {
+                case "交<br>通<br>图":
+                    map.addLayer(vecLayer);
+                    map.removeLayer(imageLayer);
+                    break;
+                case "影<br>像<br>图":
+                    map.addLayer(imageLayer);
+                    map.removeLayer(vecLayer);
+                    break;
+            }
+        });
+
+        //影像和矢量地图切换
+        $('#district-box li').click(function (e) {;
+            let el = e.target;
+            switch (el.innerText) {
+                case "乡镇界线":
+                    if (!$(this).hasClass('tab-active')) {
+                        map.addLayer(town_layer);
+                        $(this).addClass('tab-active');
+                    } else {
+                        $(this).removeClass('tab-active');
+                        map.removeLayer(town_layer);
+                    }
+                    break;
+                case "区级界线":
+                    if (!$(this).hasClass('tab-active')) {
+                        map.addLayer(district_layer);
+                        $(this).addClass('tab-active');
+                    } else {
+                        $(this).removeClass('tab-active');
+                        map.removeLayer(district_layer);
+                    }
+                    break;
+            }
+        });
+
+
+        var monitorIcon = L.icon({
+            iconUrl: '/dist/style/images/monitor.png',
+            iconSize: [40, 40],
+            //iconAnchor: [22, 94],
+            //popupAnchor: [-3, -76],
+        });
+        var monitorLayer = new L.featureGroup();
+        map.addLayer(monitorLayer);
+        $(".monitor_control").click(function () {
+            if (!$(this).hasClass('monitor_control_active')) {
+                $(this).addClass('monitor_control_active');
+                $.ajax({
+                    url: '/monitors?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                        setter.request.tokenName],
+                    success: function (res) {
+                        var overallArr = res.data;
+                        overallArr.forEach(function (item) {
+                            var lat = item.lat;
+                            var lng = item.lng;
+                            var tooltip = "";
+                            tooltip +=
+                                "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                            tooltip += "<div name='marker' class='map_mark'>";
+                            tooltip += "<span class='map_num'>监</span>";
+                            tooltip += "<div class='map_mark_inner'>";
+                            tooltip += "<span class='map_mark_name'>" + item.name +
+                                "</span>";
+                            tooltip += " </div>";
+                            tooltip += "</td></tr></table>";
+                            // 点样式
+                            var pointStyle = L.divIcon({
+                                //iconSize: [120, 30],
+                                iconAnchor: [8, 8],
+                                className: 'leaflet-divlabel',
+                                html: tooltip
+                            });
+
+                            item.icon = pointStyle;
+                            L.marker([lat, lng], item).addTo(monitorLayer);
+
+                        })
+                    }
+                });
+            } else {
+                $(this).removeClass('monitor_control_active');
+                monitorLayer.clearLayers();
+            }
+
+        });
+
+
+        var overallLayer = new L.featureGroup();
+        map.addLayer(overallLayer);
+        $(".overall_control").click(function () {
+            if (!$(this).hasClass('overall_control_active')) {
+                $(this).addClass('overall_control_active');
+                $.ajax({
+                    url: '/overalls?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                        setter.request.tokenName],
+                    success: function (res) {
+                        var overallArr = res.data;
+                        overallArr.forEach(function (item) {
+                            var lat = item.lat;
+                            var lng = item.lng;
+
+
+                            var tooltip = "";
+                            tooltip +=
+                                "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                            tooltip += "<div name='marker' class='map_mark'>";
+                            tooltip += "<span class='map_num'>全</span>";
+                            tooltip += "<div class='map_mark_inner'>";
+                            tooltip += "<span class='map_mark_name'>" + item.name +
+                                "</span>";
+                            tooltip += " </div>";
+                            tooltip += "</td></tr></table>";
+                            // 点样式
+                            var pointStyle = L.divIcon({
+                                //iconSize: [120, 30],
+                                iconAnchor: [8, 8],
+                                className: 'leaflet-divlabel',
+                                html: tooltip
+                            });
+
+                            item.icon = pointStyle;
+                            L.marker([lat, lng], item).addTo(overallLayer);
+
+                        })
+                    }
+                });
+            } else {
+                $(this).removeClass('overall_control_active');
+                overallLayer.clearLayers();
+            }
+        });
+
+        monitorLayer.on('click', function (e) {
+            var rtmp = e.layer.options.rtmp;
+            var name = e.layer.options.name;
+            layer.open({
+                title: name,
+                type: 2,
+                content: setter.base + 'views/monitor/play.html?rtmp=' + rtmp,
+                area: ['681px', '600px']
+            })
+        });
+        overallLayer.on('click', function (e) {
+            layer.open({
+                title: e.layer.options.name,
+                type: 2,
+                content: e.layer.options.url,
+                area: ['1000px', '600px']
+            })
+        });
+
+        var trun1 = 0;
+        var resUrl = "/dist/style/res";
+
+        $('.shrink1').click(function (event) {
+            if (trun1) {
+                $(".Legendcontent1").css("display", "none");
+                $(this).css({"display": "block","background":"url('" + resUrl + "/zk1.png') no-repeat"});
+                trun1 = 0;
+            } else {
+                $(".Legendcontent1").css("display", "block");
+                $(this).css({"display": "block","background":"url('" + resUrl + "/sq1.png') no-repeat"});
+                trun1 = 1;
+            }
+        });
+        $('.Legendname1').click(function () {
+            $('.shrink1').click();
+        });
+        //水质 图层
+        var waterQualityLayerMarkers = L.markerClusterGroup();
+        //初始化水质图层
+        $.ajax({
+            url: '/quality/?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                setter.request.tokenName],
+            type: 'GET',
+            data: {
+                'limit': '100'
+            },
+            success: function (res) {
+                res.data.forEach(function (item) {
+                    var lat = item.latitude;
+                    var lng = item.longitude;
+                    var tooltip = "";
+                    tooltip += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                    tooltip += "<div name='marker' class='map_mark'>";
+                    tooltip += "<span class='map_num'>质</span>";
+                    tooltip += "<div class='map_mark_inner'>";
+                    tooltip += "<span class='map_mark_name'>" + item.name + "</span>";
+                    tooltip += " </div>";
+                    tooltip += "</td></tr></table>";
+                    var pointStyle = L.divIcon({
+                        iconAnchor: [8, 8],
+                        className: 'leaflet-divlabel',
+                        html: tooltip
+                    });
+                    item.icon = pointStyle;
+                    var tempMarker = L.marker([lat, lng], item).addTo(
+                        waterQualityLayerMarkers);
+                    tempMarker.on('click', function (ele) {
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                            item.name +
+                            "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                            item.type +
+                            "</span></td></tr>";
+                        popup += "<tr><td>水质目标 ：</td><td><span class='orange'>" +
+                            item.target +
+                            " 类</span></td><td>建站年月 ：</td><td><span class='orange'>" +
+                            item.build_year +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td width='20%'>水功能区 ：</td><td colspan='3'><span class='orange'>" +
+                            item.zone + "</span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                            minWidth: 380
+                        }).setLatLng([lat, lng]).setContent(popup).openOn(map);
+                    });
+                })
+            }
+        });
+        //水文 图层
+        var waterHydrologyLayerMarkers = L.markerClusterGroup();
+        $.ajax({
+            url: '/hydrology/?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                setter.request.tokenName],
+            type: 'GET',
+            data: {
+                'limit': '100'
+            },
+            success: function (res) {
+                res.data.forEach(function (item) {
+                    var lat = item.latitude;
+                    var lng = item.longitude;
+                    var tooltip = "";
+                    tooltip += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                    tooltip += "<div name='marker' class='map_mark'>";
+                    tooltip += "<span class='map_num'>文</span>";
+                    tooltip += "<div class='map_mark_inner'>";
+                    tooltip += "<span class='map_mark_name'>" + item.name + "</span>";
+                    tooltip += " </div>";
+                    tooltip += "</td></tr></table>";
+                    var pointStyle = L.divIcon({
+                        iconAnchor: [8, 8],
+                        className: 'leaflet-divlabel',
+                        html: tooltip
+                    });
+                    item.icon = pointStyle;
+                    var tempMarker = L.marker([lat, lng], item).addTo(
+                        waterHydrologyLayerMarkers);
+                    tempMarker.on('click', function (ele) {;
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='20%'>测站名称 ：</td><td width='28%'><span class='orange'>" +
+                            item.name +
+                            "</span></td><td width='20%'>测站类别 ：</td><td width='28%'><span class='orange'>" +
+                            item.type +
+                            "</span></td></tr>";
+                        popup += "<tr><td>观测项目 ：</td><td><span class='orange'>" +
+                            item.target +
+                            " </span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                            minWidth: 380
+                        }).setLatLng([lat, lng]).setContent(popup).openOn(map);
+                    });
+
+                })
+            }
+        });
+        //水闸 图层
+        var waterGateLayerMarkers = L.markerClusterGroup();
+        $.ajax({
+            url: '/locks/?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                setter.request.tokenName],
+            type: 'GET',
+            data: {
+                'limit': '100'
+            },
+            success: function (res) {
+                res.data.forEach(function (item) {;
+                    var lat = item.latitude;
+                    var lng = item.longitude;
+                    var tooltip = "";
+                    tooltip += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                    tooltip += "<div name='marker' class='map_mark'>";
+                    tooltip += "<span class='map_num'>闸</span>";
+                    tooltip += "<div class='map_mark_inner'>";
+                    tooltip += "<span class='map_mark_name'>" + item.name + "</span>";
+                    tooltip += " </div>";
+                    tooltip += "</td></tr></table>";
+                    var pointStyle = L.divIcon({
+                        iconAnchor: [8, 8],
+                        className: 'leaflet-divlabel',
+                        html: tooltip
+                    });
+                    item.icon = pointStyle;
+                    var tempMarker = L.marker([lat, lng], item).addTo(waterGateLayerMarkers);
+                    tempMarker.on('click', function (ele) {;
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='13%'>名称 ：</td><td width='33%'><span class='orange'>" +
+                            item.name +
+                            "</span></td><td width='21%'>所属行政区 ：</td><td width='27%'><span class='orange'>" +
+                            item.district +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>备注 ：</td><td colspan='3'><span class='orange'>" +
+                            item.remark +
+                            " </span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                            minWidth: 380
+                        }).setLatLng([lat, lng]).setContent(popup).openOn(map);
+                    });
+                })
+            }
+        });
+        //水泵 图层
+        var waterPumpLayerMarkers = L.markerClusterGroup();
+        $.ajax({
+            url: '/pumps/?' + setter.request.tokenName + '=' + layui.data(setter.tableName)[
+                setter.request.tokenName],
+            type: 'GET',
+            data: {
+                'limit': '100'
+            },
+            success: function (res) {
+                res.data.forEach(function (item) {;
+                    var lat = item.latitude;
+                    var lng = item.longitude;
+                    var tooltip = "";
+                    tooltip += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+                    tooltip += "<div name='marker' class='map_mark'>";
+                    tooltip += "<span class='map_num'>泵</span>";
+                    tooltip += "<div class='map_mark_inner'>";
+                    tooltip += "<span class='map_mark_name'>" + item.name + "</span>";
+                    tooltip += " </div>";
+                    tooltip += "</td></tr></table>";
+                    var pointStyle = L.divIcon({
+                        iconAnchor: [8, 8],
+                        className: 'leaflet-divlabel',
+                        html: tooltip
+                    });
+                    item.icon = pointStyle;
+                    var tempMarker = L.marker([lat, lng], item).addTo(waterPumpLayerMarkers);
+                    tempMarker.on('click', function (ele) {;
+                        var popup =
+                            "<table width='100%' cellpadding='2' cellspacing='0' border='0' class='table_form mt5'><tbody>";
+                        popup +=
+                            "<tr><td width='13%'>名称 ：</td><td width='33%'><span class='orange'>" +
+                            item.name +
+                            "</span></td><td width='21%'>所属行政区 ：</td><td width='27%'><span class='orange'>" +
+                            item.district +
+                            "</span></td></tr>";
+                        popup +=
+                            "<tr><td>备注 ：</td><td colspan='3'><span class='orange'>" +
+                            item.remark +
+                            " </span></td></tr>";
+                        popup += "</tbody></table>";
+                        L.popup({
+                            minWidth: 380
+                        }).setLatLng([lat, lng]).setContent(popup).openOn(map);
+                    });
+                })
+            }
+        });
+
+    });
+</script>

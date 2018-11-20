@@ -1,0 +1,26 @@
+<link rel="stylesheet" href="../../../../start/layui/css/layui.css" media="all">
+<link rel="stylesheet" href="../../../style/pop.css" media="all">
+
+<div class="layui-fluid">
+    <div class="layui-card-body">
+        <div>
+            <form class="layui-form" action="" lay-filter="edit-form">
+                <div class="new-form-item">
+                    <label class="layui-form-label">角色名称</label>
+                    <div class="layui-input-block new-input">
+                        <input type="text" class="layui-input" lay-verify="required" placeholder="" id="" name='name' style='width:215px;'>
+                    </div>
+                </div>
+                <div class="new-form-item">
+                    <div class="layui-input-block new-input btn-bottom">
+                        <button class="layui-btn cancle">取消</button>
+                        <button class="layui-btn yes" lay-submit="" lay-filter="confirmBtn">确认</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="../../../../start/layui/layui.all.js"></script>
+<script src="../../../config.js"></script>
+<script src='../../../controller/roleedit.js'></script>

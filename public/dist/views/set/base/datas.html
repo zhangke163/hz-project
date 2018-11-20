@@ -1,0 +1,80 @@
+<title>数据概况</title>
+<style>
+        .xjbg{
+            background:#009688;
+            color:#fff;
+        }
+        .hjbg{
+            background:#198AFF;
+            color:#fff;
+        }
+        .xjbg:hover{
+            color:#666;
+        }
+        .hjbg:hover{
+            color:#666;
+        }
+        .layui-table th{
+            text-align: center;
+        }
+        .layui-table td{
+            text-align: center;
+        }
+        .layui-table td:nth-last-child(1){
+            text-align: left;
+        }
+        </style>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <!-- <a><cite>设置</cite></a> -->
+        <a><cite>数据概况</cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">水域省市区河道统计</div>
+                <div class="layui-card-body">
+                    <table class="layui-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">序号</th>
+                                <th rowspan="2" width='80'>所属县区</th>
+                                <th rowspan="2" width='80'>河道名称</th>
+                                <th rowspan="2" width='60'>河流等级</th>
+                                <th colspan="2">现状</th>
+                                <th colspan="2">规划</th>
+                                <th colspan="3">河流起点</th>
+                                <th colspan="3">河流终点</th>
+                                <th colspan="8" rowspan="2">主要途经点</th>
+                            </tr>
+                            <tr>
+                                <th>水域面积(m2)</th>
+                                <th>容积(万m3)</th>
+                                <th>水域面积(m2)</th>
+                                <th>容积(万m3)</th>
+                                <th width='120'>位置</th>
+                                <th>东经</th>
+                                <th>北纬</th>
+                                <th width='120'>位置</th>
+                                <th>东经</th>
+                                <th>北纬</th>
+                            </tr>
+                        </thead>
+                        <tbody class='tbody'>
+                            
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    layui.use('datas', layui.factory('datas'));
+</script>

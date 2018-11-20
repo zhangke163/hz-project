@@ -1,0 +1,135 @@
+<title>遥感监测</title>
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a>
+            <cite>项目监管</cite>
+        </a>
+        <a>
+            <cite>遥感监测</cite>
+        </a>
+    </div>
+</div>
+<div class="layui-fluid" id="LAY-supervise-remote">
+    <blockquote class="layui-elem-quote" style="background-color: #fff">
+        <div class="searchTable layui-form-pane">
+            <button class="layui-btn" lay-submit="" lay-filter="exportExcel">导出Excel</button>
+        </div>
+    </blockquote>
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">水域变化遥感监测</div>
+                <div class="layui-card-body">
+                    <blockquote class="layui-elem-quote">系统预留接口，展示基于遥感监测的水域变化情况。下表为吴兴区2016年度水域变化部分数据（获取自：浙江省水域遥感下发调查系统）</blockquote>
+                    <table id="LAY-supervise-remote-all" lay-filter="LAY-supervise-remote-all"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="opTpl">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="view">查看</a>
+</script>
+<script>
+    layui.use(['admin', 'table', 'util', 'form'], function () {
+        var $ = layui.$,
+            admin = layui.admin,
+            setter = layui.setter,
+            table = layui.table,
+            form = layui.form,
+            element = layui.element,
+            setter = layui.setter;
+
+        var DISABLED = 'layui-btn-disabled';
+        //调用表格数据
+        $.ajax({
+            url: './json/supervise/remote.js',
+            type: 'GET',
+            data: '',
+            success: function (result) {
+                renderTable(result.data);
+            },
+            error: function (err) {
+            }
+        });
+        var table_name = table.render({
+                elem: '#LAY-supervise-remote-all',
+                url: './json/supervise/remote.js',
+                page: true,
+                even: false,
+                cols: [
+                    [{
+                            type: 'numbers',
+                            title: '图斑号',
+                            width: 50,
+                            align: 'center'
+                        },
+                        {
+                            field: 'district',
+                            title: '所在乡镇',
+                            width: 150,
+                            align: 'center'
+                        },
+                        {
+                            field: 'remote_fst',
+                            title: '第一次图像获取时间',
+                            width: 150,
+                            align: 'center'
+                        },
+                        {
+                            field: 'remote_sec',
+                            title: '第二次图像获取时间',
+                            width: 150,
+                            align: 'center'
+                        },
+                        {
+                            field: 'change_before',
+                            title: '变化前类型',
+                            align: 'center',
+                            width: 120
+                        },
+                        {
+                            field: 'change_after',
+                            title: '变化后类型',
+                            align: 'center',
+                            width: 120,
+                        },
+                        {
+                            field: 'change_area',
+                            title: '变化面积(m2)',
+                            width: 120,
+                            align: 'center'
+                        },
+                        {
+                            field: 'change_acre',
+                            title: '变化面积(亩)',
+                            width: 120,
+                            align: 'center'
+                        },
+                        {
+                            field: 'location',
+                            align: 'left',
+                            title: '位置',
+                            minwidth: 300
+                        }
+                    ]
+                ],
+                limit: 10
+            });
+        function renderTable(tableData) {
+            //导出
+            form.on('submit(exportExcel)', function () {
+                var arr = [];
+                tableData.forEach(element => {
+                    arr.push([element.id, element.district, element.remote_fst, element.remote_sec,
+                        element.change_before, element.change_after, element.change_area, element.change_acre, element.location
+                    ])
+                });
+                table.exportFile(['图斑号', '所在乡镇', '第一次图像获取时间', '第二次图像获取时间', '变化前类型', '变化后类型', '变化面积(m2)','变化面积(亩)','位置'], arr,
+                    'xls');
+                return false;
+            });
+        }
+    });
+</script>
